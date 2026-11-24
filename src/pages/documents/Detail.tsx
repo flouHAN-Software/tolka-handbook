@@ -7,7 +7,8 @@ import type { Doc, RoleId } from '../../data/types';
 import { date, span } from '../../lib/format';
 import { t } from '../../lib/i18n';
 import { currentRole } from '../../lib/role';
-import { href } from '../../lib/router';
+import { go, href } from '../../lib/router';
+import { setScope } from '../../lib/scope';
 import { StatusCell } from './Documents';
 
 const ROLES: RoleId[] = ['care', 'claims', 'siu', 'knowledge'];
@@ -62,7 +63,10 @@ export function Detail({ doc, onClose, phone = false }: { doc: Doc; onClose: () 
           <StatusCell d={doc} />
         </div>
         {doc.sections.length > 0 && s.status === 'ready' && (
-          <a className="btn primary detail-open" href={href('documents', doc.id, 'view')}>{t('d.open')}</a>
+          <div className="detail-acts">
+            <a className="btn primary detail-open" href={href('documents', doc.id, 'view')}>{t('d.open')}</a>
+            <button type="button" className="btn detail-ask" onClick={() => { setScope(doc.id); go('ask'); }}>{t('d.askOnly')}</button>
+          </div>
         )}
 
         {/* Durum mesajları: ne oldu, ne yapılmalı (GOV.UK dili) */}

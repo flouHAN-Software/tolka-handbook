@@ -188,3 +188,23 @@ dialog.guide::backdrop {
     white-space: normal;
   }
 }
+
+/* Rehber: hangi rolle girildiği ve "Bu proje hakkında" bağlantısı */
+.g-role {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--sunk);
+  border-left: 3px solid var(--text);
+}
+.g-role .linkish,
+.g-more .linkish {
+  font-weight: 600;
+}
+.g-more {
+  margin-top: 8px;
+  color: var(--text-2);
+}

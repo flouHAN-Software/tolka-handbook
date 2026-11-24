@@ -45,8 +45,9 @@ export interface AnswerData {
 const RANK: Classification[] = ['public', 'internal', 'confidential', 'strict'];
 
 /** Aranacak belgeler: rolün açabildiği, okunmuş; poliçe şartlarında hasar tarihinde yürürlükte olan sürüm */
-export function searchable(role: RoleId, lossDate?: string) {
-  const docs = allDocs().filter((d) => canOpen(d, role));
+export function searchable(role: RoleId, lossDate?: string, only?: string) {
+  // only: "Yalnızca bu belgeye sor" seçildiyse yalnızca o belge (rol yine açabilmeli)
+  const docs = allDocs().filter((d) => canOpen(d, role) && (!only || d.id === only));
   const ready = docs.filter((d) => liveStatus(d).status === 'ready');
   const notSearched = docs
     .filter((d) => liveStatus(d).status !== 'ready' && !d.supersededBy)
@@ -81,12 +82,15 @@ export const ROLE_BOOST: Record<RoleId, string[]> = { care: ['customer', 'care',
 /** Sorudaki tarih, aramada kelime sayılmasın diye çıkarılır */
 export const withoutDate = (q: string) => q.replace(/\d{1,2}\s+[a-zçğıöşü]{3,9}\.?\s+\d{4}|\d{1,2}[/.]\d{1,2}[/.]\d{4}/gi, ' ');
 
-export function answer(q: string, role: RoleId, lossDateField?: string): AnswerData {
+export function answer(q: string, role: RoleId, lossDateField?: string, only?: string): AnswerData {
   const lossDate = lossDateField || findDate(q) || undefined;
-  const { docs, notSearched } = searchable(role, lossDate);
+  const { docs, notSearched } = searchable(role, lossDate, only);
   const { hits } = new Index(docs).search(withoutDate(q), 3, ROLE_BOOST[role]);
   const best = hits[0];
-  const found = !!best && best.score >= MIN_SCORE && best.coverage >= MIN_COVERAGE && best.spec >= MIN_SPECIFIC && best.weighted >= MIN_WEIGHTED;
+  // Tek belgeyle sınırlı aramada (kullanıcı belgeyi kendisi seçti) puan ve özgüllük eşiği aranmaz: küçük bir belgede her
+  // sözcük "yaygın" görünür. Sorunun ayırt edici sözcüklerinin belgede geçmesi yine şarttır.
+  const found = !!best && best.coverage >= MIN_COVERAGE && best.weighted >= MIN_WEIGHTED
+    && (only ? best.score >= 1 : best.score >= MIN_SCORE && best.spec >= MIN_SPECIFIC);
   const cites = found ? hits.map((h) => gradeRow({ key: h.p.key, docId: h.p.doc.id, ref: h.p.ref, loc: h.p.loc, matched: h.matched }, role)) : [];
   const wordingDoc = cites.map((c) => docById(c.docId)).find((d) => d?.kind === 'wording');
   return {

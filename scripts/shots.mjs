@@ -54,10 +54,12 @@ const shot = async (p, name, opts = {}) => { await p.screenshot({ path: join(OUT
   await shot(p, '02-hasar-tarihi-koyu.png');
   await p.context().close();
 }
-// 3. Roller: giriş ekranı
+// 3. Roller: giriş ekranı ("Rolü değiştir" ile açılır)
 {
-  const p = await page({ as: '' });
+  const p = await page();
   await go(p, 'ask');
+  await p.evaluate(() => window.dispatchEvent(new Event('tolka:switch')));
+  await p.waitForTimeout(400);
   await shot(p, '03-roller.png');
   await p.context().close();
 }
@@ -103,6 +105,22 @@ const shot = async (p, name, opts = {}) => { await p.screenshot({ path: join(OUT
   await p.click('.qa:last-child .ai-text .cite >> nth=1');
   await p.waitForTimeout(1200);
   await shot(p, '10-kart-koyu.png');
+  await p.context().close();
+}
+// 11. Kendi belge: Türkçe personel el kitabı eklenip yalnızca ona Türkçe soru
+{
+  const p = await page({ lang: 'tr' });
+  await go(p, 'ask');
+  await p.click('.start-own .btn');
+  await p.waitForTimeout(300);
+  await p.click('dialog.add .samples .linkish >> nth=0');
+  await p.waitForTimeout(700);
+  await p.click('dialog.add button[type=submit]');
+  await p.waitForFunction(() => document.querySelector('.scope') && !/okunuyor/.test(document.querySelector('.scope').textContent), null, { timeout: 30000 });
+  await ask(p, 'Yıllık izin kaç gün? Kullanmadığım izinler ne olur?');
+  await p.click('.qa:last-child .ai-text .cite >> nth=0');
+  await p.waitForTimeout(1200);
+  await shot(p, '11-kendi-belge.png');
   await p.context().close();
 }
 // 9. Rehber

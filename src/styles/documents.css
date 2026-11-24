@@ -437,3 +437,10 @@
   outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
+
+/* Belge kartı: belgenin tamamı ve "Yalnızca bu belgeye sor" */
+.detail-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

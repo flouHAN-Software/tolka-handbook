@@ -306,3 +306,11 @@ select.input {
     grid-template-columns: 1fr;
   }
 }
+
+/* Demo notu: gerçek kurulumda belge eklemek bilgi yönetiminin işi */
+.add-demo {
+  padding: 10px 14px;
+  border-left: 3px solid var(--line-2);
+  background: var(--sunk);
+  color: var(--text-2);
+}

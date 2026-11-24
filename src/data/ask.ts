@@ -9,13 +9,13 @@ import type { RoleId } from './types';
 
 export type Mode = 'ai' | 'search';
 
-export function ask(convId: string | undefined, q: string, role: RoleId, lossDateField: string | undefined, lang: 'en' | 'tr', mode: Mode) {
-  const base = answer(q, role, lossDateField);
+export function ask(convId: string | undefined, q: string, role: RoleId, lossDateField: string | undefined, lang: 'en' | 'tr', mode: Mode, only?: string) {
+  const base = answer(q, role, lossDateField, only);
   if (mode === 'search') {
     const id = addAnswer(convId, base);
     return { convId: id, answer: base, done: Promise.resolve(base) };
   }
-  const { docs } = searchable(role, base.lossDate);
+  const { docs } = searchable(role, base.lossDate, only);
   const hits = new Index(docs).search(withoutDate(q), 5, ROLE_BOOST[role], 0.3).hits;
   // Hiçbir bölüm eşleşmiyorsa modele sorulmaz (kota harcanmaz)
   if (!hits.length) {
@@ -26,7 +26,7 @@ export function ask(convId: string | undefined, q: string, role: RoleId, lossDat
   const pending: AnswerData = { ...base, mode: 'ai', pending: true, kind: 'found', cites: sent };
   const id = addAnswer(convId, pending);
 
-  const done = askModel(q, lang, ROLE_ASKER[role], sent.map((c) => toModel(passageOf(c)!))).then((r) => {
+  const done = askModel(q, lang, ROLE_ASKER[role], sent.map((c) => toModel(passageOf(c)!)), role).then((r) => {
     let next: AnswerData;
     if (!r.ok) {
       next = { ...base, id: pending.id, fallback: r.reason };

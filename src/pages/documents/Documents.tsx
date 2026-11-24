@@ -106,7 +106,8 @@ export function Documents() {
             <h1>{t('documents.title')}</h1>
             <p>{t('documents.lead')}</p>
           </div>
-          {role === 'knowledge' && <button ref={addRef} type="button" className="btn primary lib-add" onClick={() => setAdding(true)}>
+          {/* Demoda herkes belge ekleyebilir (gerçek kurulumda bilgi yönetimi); pencerede bu söylenir */}
+          {<button ref={addRef} type="button" className="btn primary lib-add" onClick={() => setAdding(true)}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M8 3v10M3 8h10" strokeLinecap="round" /></svg>
             {t('add.open')}
           </button>}

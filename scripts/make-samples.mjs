@@ -1,6 +1,7 @@
 // Belge ekleme penceresindeki örnek dosyaları üretir (public/samples/):
 //   Home Emergency Cover 2026.1.pdf   metin katmanlı PDF; yüklenince gerçekten okunur
 //   Boiler Service Leaflet (scan).pdf yalnızca görüntüden oluşan PDF; yüklenince "seçilebilir metin yok" hatası verir
+//   Personel El Kitabi 2026.1.pdf     Türkçe, metin katmanlı PDF (Türkçe belgeye Türkçe soru)
 // Kullanım: node scripts/make-samples.mjs   (metin özgündür, kurgusal Tolka Insurance için yazıldı)
 
 import { chromium } from 'playwright';
@@ -12,6 +13,9 @@ const out = fileURLToPath(new URL('public/samples/', root));
 const font = async (p) => (await readFile(new URL(p, root))).toString('base64');
 const serif = await font('node_modules/@fontsource-variable/source-serif-4/files/source-serif-4-latin-opsz-normal.woff2');
 const sans = await font('node_modules/@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-wght-normal.woff2');
+// Türkçe harfler (ğ, ş, ı, İ) latin-ext alt kümesinde
+const serifX = await font('node_modules/@fontsource-variable/source-serif-4/files/source-serif-4-latin-ext-opsz-normal.woff2');
+const sansX = await font('node_modules/@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-ext-wght-normal.woff2');
 
 const css = `
 @font-face { font-family: S; src: url(data:font/woff2;base64,${serif}) format('woff2'); font-weight: 200 900; }
@@ -28,6 +32,44 @@ ol { margin: 0 0 8pt; padding-left: 18pt; }
 li { margin-bottom: 4pt; }
 .pb { break-before: page; }
 `;
+
+const cssTR = css
+  .replace('body { font: 10.5pt/1.55 S, Georgia, serif;', 'body { font: 10.5pt/1.55 S, SX, Georgia, serif;')
+  .replace(/font: (9pt|9.5pt) A, sans-serif/g, 'font: $1 A, AX, sans-serif')
+  .replace(/font: 600 15pt S, serif/, 'font: 600 15pt S, SX, serif') + `
+@font-face { font-family: SX; src: url(data:font/woff2;base64,${serifX}) format('woff2'); font-weight: 200 900; }
+@font-face { font-family: AX; src: url(data:font/woff2;base64,${sansX}) format('woff2'); font-weight: 200 800; }
+`;
+
+// Türkçe örnek: kurgusal bir şirketin personel el kitabı (Türkçe belgeyle Türkçe soru-yanıtı denemek için).
+// Şirket adı yok; kurallar şirketin kendi kuralları olarak yazıldı, yasaya gönderme yapılmıyor.
+const handbookTR = `<!doctype html><html lang="tr"><head><meta charset="utf-8"><style>${cssTR}</style></head><body>
+<div class="lh"><b>Örnek Şirket</b><span>Personel El Kitabı · 2026.1</span></div>
+<h1>Personel El Kitabı</h1>
+<div class="sub">Bütün çalışanlar için. Yürürlük: 1 Ocak 2026. Hazırlayan: İnsan Kaynakları.</div>
+<h2>1 Bu el kitabı hakkında</h2>
+<p>Bu el kitabı çalışma düzenini, izinleri, uzaktan çalışmayı, masrafları ve şirket ekipmanını anlatır. İş sözleşmenizle çelişen bir hüküm olursa sözleşmeniz geçerlidir.</p>
+<p>El kitabını İnsan Kaynakları hazırlar ve her yıl ocak ayında gözden geçirir. Sorularınız için İK ekibine yazabilirsiniz.</p>
+<h2>2 Çalışma saatleri</h2>
+<p>Haftalık çalışma süresi 45 saattir. Çekirdek saatler 10.00 ile 16.00 arasıdır; bu saatlerde ekibinizin size ulaşabilmesi beklenir.</p>
+<p>Güne 08.00 ile 10.00 arasında istediğiniz saatte başlayabilirsiniz. Öğle arası bir saattir ve çalışma süresine sayılmaz.</p>
+<p>Fazla mesai yalnızca yöneticinizin yazılı onayıyla yapılır. Fazladan çalışılan her saat için saat ücretinin yüzde elli fazlası ödenir; isterseniz ödeme yerine bir buçuk saat serbest zaman kullanabilirsiniz.</p>
+<h2>3 Yıllık izin</h2>
+<p>Yıllık ücretli izniniz kıdeminize göre belirlenir: bir yıldan beş yıla kadar 16 iş günü, beş yıldan on beş yıla kadar 22 iş günü, on beş yıldan fazla kıdemde 28 iş günü.</p>
+<p>İzin talebinizi en az iki hafta önceden İK portalından gönderin. Üç günü geçmeyen izinler için bir hafta önceden bildirmeniz yeterlidir.</p>
+<p>Kullanmadığınız izin günlerinden en fazla beşi bir sonraki yıla aktarılır. Aktarılan günler 31 Mart’a kadar kullanılmazsa silinir.</p>
+<h2 class="pb">4 Uzaktan çalışma</h2>
+<p>Haftada iki gün uzaktan çalışabilirsiniz. Hangi günlerin uzaktan olacağını ekibinizle birlikte belirlersiniz; bu günler takvimde görünmelidir.</p>
+<p>İşe başladığınız ilk üç ay boyunca uzaktan çalışma yapılmaz.</p>
+<p>Uzaktan çalıştığınız aylarda internet gideriniz için maaşınızla birlikte 750 TL ödenir.</p>
+<h2>5 Masraflar</h2>
+<p>İş için yaptığınız harcamalar, fişi ya da faturası olduğu sürece geri ödenir. Masraf formunu harcamadan sonraki 30 gün içinde gönderin; daha geç gelen formlar ödenmez.</p>
+<p>Şehir dışı görevlerde günlük yemek gideri için 1.200 TL’ye kadar ödeme yapılır. Konaklama, İK’nın önceden onayladığı otellerden birinde yapılır.</p>
+<p>Taksi yalnızca toplu taşımanın çalışmadığı saatlerde ya da yanınızda taşınması zor bir ekipman varken kullanılır.</p>
+<h2>6 Şirket ekipmanı</h2>
+<p>Size verilen bilgisayar ve telefon şirketin malıdır. Kaybolursa ya da çalınırsa 24 saat içinde Bilgi İşlem’e bildirin.</p>
+<p>Şirketten ayrılırken bütün ekipmanı son iş gününüzde teslim edersiniz.</p>
+</body></html>`;
 
 const emergency = `<!doctype html><html lang="en-IE"><head><meta charset="utf-8"><style>${css}</style></head><body>
 <div class="lh"><b>Tolka</b><span>Home Emergency Cover · Policy wording 2026.1</span></div>
@@ -89,6 +131,9 @@ try {
   await page.setContent(emergency, { waitUntil: 'load' });
   await page.evaluate(() => document.fonts.ready);
   await page.pdf({ path: out + 'Home Emergency Cover 2026.1.pdf', format: 'A4', printBackground: true, preferCSSPageSize: true, tagged: true });
+  await page.setContent(handbookTR, { waitUntil: 'load' });
+  await page.evaluate(() => document.fonts.ready);
+  await page.pdf({ path: out + 'Personel El Kitabi 2026.1.pdf', format: 'A4', printBackground: true, preferCSSPageSize: true, tagged: true });
 
   // Taranmış görünüm: sayfanın görüntüsü alınır, hafif eğilip griye çekilir ve yalnızca görüntü olarak PDF'e konur
   const shot = await browser.newPage({ viewport: { width: 794, height: 1123 }, deviceScaleFactor: 1.5 });

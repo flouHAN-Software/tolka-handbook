@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type DragEvent, type FormEvent } from 'react';
 import { PEOPLE } from '../../data/people';
-import { addUpload, type UploadMeta } from '../../data/uploads';
+import { AUDIENCE, addUpload, type UploadMeta } from '../../data/uploads';
+import { currentRole } from '../../lib/role';
 import { DEMO_TODAY, type Classification, type DocKind } from '../../data/types';
 import { ACCEPT, MAX_BYTES, kindOf } from '../../lib/extract';
-import { t } from '../../lib/i18n';
+import { getLang, t } from '../../lib/i18n';
 import type { Key } from '../../lib/strings';
 
 const KINDS: DocKind[] = ['wording', 'ipid', 'manual', 'guide', 'table', 'procedure', 'callguide', 'list'];
@@ -16,7 +17,9 @@ type Errors = Partial<Record<Field, Key>>;
 // Örnek dosyalar: biri gerçekten okunur, öteki taranmış olduğu için gerçekten hata verir
 const SAMPLES = [
   { key: 'add.sample.text' as const, file: 'Home Emergency Cover 2026.1.pdf', meta: { title: 'Home Emergency Cover', kind: 'wording' as DocKind, version: '2026.1', inForce: '2026-03-01', owner: 0, classification: 'public' as Classification, reviewMonths: 12 } },
-  { key: 'add.sample.scan' as const, file: 'Boiler Service Leaflet (scan).pdf', meta: { title: 'Boiler Service Leaflet', kind: 'guide' as DocKind, version: '2025', inForce: '2025-09-01', owner: 5, classification: 'public' as Classification, reviewMonths: 12 } }
+  { key: 'add.sample.scan' as const, file: 'Boiler Service Leaflet (scan).pdf', meta: { title: 'Boiler Service Leaflet', kind: 'guide' as DocKind, version: '2025', inForce: '2025-09-01', owner: 5, classification: 'public' as Classification, reviewMonths: 12 } },
+  // Türkçe belgeyle Türkçe soru: kurgusal bir şirketin personel el kitabı
+  { key: 'add.sample.tr' as const, file: 'Personel El Kitabi 2026.1.pdf', meta: { title: 'Personel El Kitabı', kind: 'manual' as DocKind, version: '2026.1', inForce: '2026-01-01', owner: 7, classification: 'internal' as Classification, reviewMonths: 12 } }
 ];
 
 const size = (b: number) => (b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`);
@@ -35,7 +38,9 @@ function guess(name: string) {
   return m ? { title: m[1].trim(), version: m[2] } : { title: base, version: '' };
 }
 
-export function AddDocument({ open, onClose, onAdded }: { open: boolean; onClose: () => void; onAdded: (id: string, title: string, visible: boolean) => void }) {
+/** quick: Sor ekranındaki "Kendi belgenizle deneyin" — yalnızca dosya ve ad sorulur; öbür bilgiler varsayılanla doldurulur */
+export function AddDocument({ open, onClose, onAdded, quick = false }: { open: boolean; onClose: () => void; onAdded: (id: string, title: string, visible: boolean) => void; quick?: boolean }) {
+  const role = currentRole();
   const ref = useRef<HTMLDialogElement>(null);
   const summaryRef = useRef<HTMLDivElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -88,7 +93,7 @@ export function AddDocument({ open, onClose, onAdded }: { open: boolean; onClose
     const fe = checkFile(file);
     if (fe) errs.file = fe;
     if (!title.trim()) errs.title = 'err.title';
-    if (!version.trim()) errs.version = 'err.version';
+    if (!version.trim() && !quick) errs.version = 'err.version';
     if (!/^\d{4}-\d{2}-\d{2}$/.test(inForce)) errs.inForce = 'err.inforce';
     setErrors(errs);
     if (Object.keys(errs).length) {
@@ -97,10 +102,10 @@ export function AddDocument({ open, onClose, onAdded }: { open: boolean; onClose
       requestAnimationFrame(() => summaryRef.current?.focus());
       return;
     }
-    const meta: UploadMeta = { title: title.trim(), kind, version: version.trim(), inForce, owner: PEOPLE[owner], classification: level, reviewMonths: review };
+    const meta: UploadMeta = { title: title.trim(), kind, version: version.trim() || '1', inForce, owner: PEOPLE[owner], classification: level, reviewMonths: review };
     const doc = addUpload(file!, meta);
     reset();
-    onAdded(doc.id, doc.title, level !== 'strict');
+    onAdded(doc.id, doc.title, AUDIENCE[level].includes(role));
   };
 
   const focusField = (f: Field) => document.getElementById(f === 'file' ? 'add-file' : `add-${f}`)?.focus();
@@ -123,7 +128,7 @@ export function AddDocument({ open, onClose, onAdded }: { open: boolean; onClose
     <dialog ref={ref} className="add" aria-labelledby="add-h" onClose={() => { reset(); onClose(); }}>
       <form className="add-form" onSubmit={submit} noValidate>
         <header className="add-head">
-          <h2 id="add-h">{t('add.title')}</h2>
+          <h2 id="add-h">{t(quick ? 'own.dialog' : 'add.title')}</h2>
           <button type="button" className="x" onClick={() => ref.current?.close()}>
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" /></svg>
             <span className="sr-only">{t('add.cancel')}</span>
@@ -131,6 +136,7 @@ export function AddDocument({ open, onClose, onAdded }: { open: boolean; onClose
         </header>
         <div className="add-body">
           <p className="add-lead">{t('add.lead')}</p>
+          {role !== 'knowledge' && <p className="add-demo">{t('add.demo')}</p>}
 
           {showSummary && Object.keys(errors).length > 0 && (
             <div className="err-summary" ref={summaryRef} tabIndex={-1} role="alert" aria-labelledby="add-err-h">
@@ -168,7 +174,8 @@ export function AddDocument({ open, onClose, onAdded }: { open: boolean; onClose
             </label>
             <div className="samples">
               <span>{t('add.sample')}</span>
-              {SAMPLES.map((s, i) => (
+              {/* Türkçe arayüzde Türkçe örnek başta */}
+              {SAMPLES.map((s, i) => ({ s, i })).sort((a, b) => (getLang() === 'tr' ? (b.s.key === 'add.sample.tr' ? 1 : 0) - (a.s.key === 'add.sample.tr' ? 1 : 0) : 0)).map(({ s, i }) => (
                 <button key={s.file} type="button" className="linkish" onClick={() => takeSample(i)}>{t(s.key)}</button>
               ))}
             </div>
@@ -180,6 +187,7 @@ export function AddDocument({ open, onClose, onAdded }: { open: boolean; onClose
             <input id="add-title" className="input" value={title} onChange={(e) => setTitle(e.target.value)} aria-describedby={described('title')} aria-invalid={!!errors.title} autoComplete="off" />
           </div>
 
+          {!quick && <>
           <div className="field-row">
             <div className="field">
               <label className="field-l" htmlFor="add-kind">{t('add.f.kind')}</label>
@@ -227,9 +235,10 @@ export function AddDocument({ open, onClose, onAdded }: { open: boolean; onClose
               </label>
             ))}
           </fieldset>
+          </>}
         </div>
         <footer className="add-foot">
-          <button type="submit" className="btn primary">{t('add.submit')}</button>
+          <button type="submit" className="btn primary">{t(quick ? 'own.submit' : 'add.submit')}</button>
           <button type="button" className="btn" onClick={() => ref.current?.close()}>{t('add.cancel')}</button>
         </footer>
       </form>

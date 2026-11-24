@@ -4,9 +4,13 @@ import { ClassLabel, Status } from '../../components/Labels';
 import { passageOf, type AnswerData } from '../../data/answer';
 import { ask, type Mode } from '../../data/ask';
 import { conversationById, useConversations } from '../../data/conversations';
-import { docById, review } from '../../data/library';
-import { useProcessing } from '../../data/processing';
-import { useUploads } from '../../data/uploads';
+import { canOpen, docById, review } from '../../data/library';
+import { liveStatus, useProcessing } from '../../data/processing';
+import { onUploadFinished, useUploads } from '../../data/uploads';
+import { currentAccount } from '../../lib/account';
+import { ADD_KEY, scope as currentScope, setScope, useScope } from '../../lib/scope';
+import { switchAccount } from '../../components/Shell';
+import { AddDocument } from '../documents/AddDocument';
 import { findDate } from '../../lib/dates';
 import { date } from '../../lib/format';
 import { getLang, t } from '../../lib/i18n';
@@ -64,6 +68,38 @@ export function Ask() {
   };
   const box = useRef<HTMLTextAreaElement>(null);
   const thread = useRef<HTMLDivElement>(null);
+
+  // "Yalnızca bu belgeye sor": kendi eklenen PDF ya da kütüphaneden seçilen belge
+  const scopeId = useScope();
+  const scoped = scopeId ? docById(scopeId) : undefined;
+  const scopedDoc = scoped && canOpen(scoped, role) ? scoped : undefined;
+  useEffect(() => { if (scopeId && !scopedDoc) setScope(null); }, [scopeId, scopedDoc]);
+  const scopeStatus = scopedDoc ? liveStatus(scopedDoc) : undefined;
+  const scopeNote = !scopeStatus
+    ? ''
+    : scopeStatus.status === 'processing'
+      ? (scopeStatus.pages ? t('scope.reading', { page: scopeStatus.page ?? 0, pages: scopeStatus.pages }) : t('scope.reading0'))
+      : scopeStatus.status === 'failed' ? t('scope.failed') : '';
+
+  // Kendi belgenizle deneyin: ekleme penceresi (rehberden de açılır)
+  const [adding, setAdding] = useState(false);
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(ADD_KEY)) { sessionStorage.removeItem(ADD_KEY); setAdding(true); }
+    } catch { /* depolama kapalı */ }
+    const on = () => {
+      try { sessionStorage.removeItem(ADD_KEY); } catch { /* depolama kapalı */ }
+      setAdding(true);
+    };
+    window.addEventListener('tolka:add', on);
+    return () => window.removeEventListener('tolka:add', on);
+  }, []);
+  useEffect(
+    () => onUploadFinished((d) => {
+      if (d.id === currentScope()) setAnnounce(d.status === 'ready' ? t('own.ready', { title: d.title }) : t('add.failed', { title: d.title }));
+    }),
+    []
+  );
   // Telefonda model yanıtı gelince: yanıt metninden üç satır bile görünmüyorsa yanıtın başına kaydırılır
   const reveal = useRef<string | null>(null);
   useEffect(() => {
@@ -97,7 +133,7 @@ export function Ask() {
       box.current?.focus();
       return;
     }
-    const { convId: id, answer: a, done } = ask(conv?.id, question, role, lossOverride ?? (loss || undefined), tr ? 'tr' : 'en', mode);
+    const { convId: id, answer: a, done } = ask(conv?.id, question, role, lossOverride ?? (loss || undefined), tr ? 'tr' : 'en', mode, scopedDoc?.id);
     setQ('');
     setLoss('');
     setShowDate(false);
@@ -126,16 +162,21 @@ export function Ask() {
     });
   };
 
-  // Rehberdeki "… olarak sor" düğmesi: soru bir kez, açılışta sorulur
+  // Rehberdeki "… olarak sor" düğmesi: soru bir kez sorulur (açılışta ya da ekran zaten açıksa olayla)
   useEffect(() => {
-    let x: { q: string; loss?: string } | null = null;
-    try {
-      x = JSON.parse(sessionStorage.getItem(TRY_KEY) || 'null');
-      sessionStorage.removeItem(TRY_KEY);
-    } catch {
-      x = null;
-    }
-    if (x?.q) run(x.q, x.loss);
+    const take = () => {
+      let x: { q: string; loss?: string } | null = null;
+      try {
+        x = JSON.parse(sessionStorage.getItem(TRY_KEY) || 'null');
+        sessionStorage.removeItem(TRY_KEY);
+      } catch {
+        x = null;
+      }
+      if (x?.q) run(x.q, x.loss);
+    };
+    take();
+    window.addEventListener('tolka:try', take);
+    return () => window.removeEventListener('tolka:try', take);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -165,6 +206,12 @@ export function Ask() {
     <form className="composer" onSubmit={submit} noValidate data-opts={opts || !!loss ? '1' : undefined}>
       <label htmlFor="ask-q" className="composer-l">{t('ask.label')}</label>
       {err && <p className="field-err" id="ask-err">{t('ask.empty')}</p>}
+      {scopedDoc && (
+        <div className="scope" role="group" aria-label={t('scope.label')}>
+          <span className="scope-t"><b>{t('scope.only', { title: scopedDoc.title })}</b>{scopeNote ? ` · ${scopeNote}` : ''}</span>
+          <button type="button" className="linkish" onClick={() => setScope(null)}>{t('scope.clear')}</button>
+        </div>
+      )}
       <div className="composer-box">
         <textarea id="ask-q" ref={box} rows={2} value={q} placeholder={t('ask.ph')}
           onChange={(e) => { setQ(e.target.value); if (err) setErr(false); }} onKeyDown={onKey}
@@ -210,6 +257,17 @@ export function Ask() {
           {!conv ? (
             <div className="start">
               <p className="start-lead">{t('ask.lead')}</p>
+              <div className="start-who">
+                <p>{t('start.who', { name: currentAccount()?.name ?? '', job: t(`job.${role}` as const).toLocaleLowerCase(tr ? 'tr' : 'en') })}</p>
+                <button type="button" className="linkish" onClick={switchAccount}>{t('start.switch')}</button>
+              </div>
+              <section className="start-own" aria-labelledby="own-h">
+                <div>
+                  <h2 id="own-h">{t('own.title')}</h2>
+                  <p>{t('own.text')}</p>
+                </div>
+                <button type="button" className="btn" onClick={() => setAdding(true)}>{t('own.add')}</button>
+              </section>
               <h2 className="start-h">{t('start.try')}</h2>
               <div className="start-group">
                 <h3>{t('start.role', { role: t(`job.${role}` as const) })}</h3>
@@ -227,7 +285,6 @@ export function Ask() {
                   </ul>
                 </div>
               ))}
-              <p className="start-up">{t('start.upload')} <a href={href('documents')}>{t('start.upload.link')}</a></p>
             </div>
           ) : (
             items.map((a: AnswerData) => (
@@ -280,6 +337,12 @@ export function Ask() {
         )}
       </aside>
       <p className="sr-only" role="status" aria-live="polite">{announce}</p>
+      <AddDocument open={adding} quick onClose={() => setAdding(false)} onAdded={(id, title) => {
+        setAdding(false);
+        setScope(id);
+        setAnnounce(t('add.added', { title }));
+        requestAnimationFrame(() => box.current?.focus());
+      }} />
     </div>
   );
 }

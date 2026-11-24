@@ -11,11 +11,12 @@ A concept web app by [flouHAN Software](https://flouhan.com): the internal docum
 
 - **Ask.** Every claim in an answer carries a source number. Click it and the document opens at that clause, marked in yellow. The assistant's own words are in plain type; the document's words are quoted in a serif, and each quote is checked against the document letter by letter. A quote that doesn't match is dropped.
 - **Conflicts and dates.** When two documents disagree (the claims guide says €350, the policy says €400), the answer gives both with their sources and says which one applies. A date of loss can be added: before 1 March 2026 the 2024.2 policy wording applies, and the answer says so.
-- **Documents.** Each document has an owner, a review date and a version history. Overdue reviews are flagged, and two versions compare word for word. You can add your own PDF: it is read in the browser with pdf.js, and scanned, password-protected and empty files each get their own message.
+- **Your own document.** From the Ask screen you can add a PDF and ask only that document. It is read in the browser with pdf.js and stays there; scanned, password-protected and empty files each get their own message. It can be in Turkish: a made-up company's staff handbook in Turkish ships as a sample, and Turkish questions are matched with Turkish stemming.
+- **Documents.** Each document has an owner, a review date and a version history. Overdue reviews are flagged, two versions compare word for word, and any document can be the only one searched.
 - **History** keeps earlier conversations, per account.
 - **Answer quality** is for the Knowledge team only. Questions the documents couldn't answer are grouped by what was missing (documents disagree, not covered, out of date, unreadable, unhelpful), with the real questions behind each group, an owner to assign and a resolve step.
 
-There are four demo accounts with no password: a customer care agent, a claims handler, a fraud investigator and a knowledge manager. Each role opens different documents, search only runs over those, and a document a role can't open is never named in its answers.
+The demo opens straight on the Ask screen as a claims handler. There are four demo accounts with no password: a customer care agent, a claims handler, a fraud investigator and a knowledge manager. Each role opens different documents, search only runs over those, and a document a role can't open is never named in its answers.
 
 The interface is in English and Turkish, with a light and a dark theme. Questions can be asked in Turkish: the answer comes back in Turkish and the quotes stay in the documents' English. A short guide opens on the first visit, and the **About this project** screen lists how to use the app, the work behind it, and the languages and tools it was built with.
 
@@ -23,12 +24,12 @@ The interface is in English and Turkish, with a light and a dark theme. Question
 
 ## How an answer is made
 
-1. **Search, in the browser.** BM25 over clauses (each clause is a passage, tables row by row), with stemming, a Turkish-to-English glossary for Turkish questions and a small boost for the asker's role. Only documents the role can open are searched. See [`src/lib/search.ts`](src/lib/search.ts) and [`src/data/answer.ts`](src/data/answer.ts).
+1. **Search, in the browser.** BM25 over clauses (each clause is a passage, tables row by row), with English and Turkish stemming, a Turkish-to-English glossary for Turkish questions and a small boost for the asker's role. Only documents the role can open are searched. See [`src/lib/search.ts`](src/lib/search.ts) and [`src/data/answer.ts`](src/data/answer.ts).
 2. **Writing.** Up to six passages go to `POST /api/handbook/answer` ([`server/handbook.js`](server/handbook.js)). Gemma 4 (`@cf/google/gemma-4-26b-a4b-it`) on Cloudflare Workers AI writes a short answer from those passages only, numbers every sentence, and answers "none" when the passages don't cover the question.
-3. **Checking.** Quotes are looked up verbatim in the passages; anything not found is removed and counted.
+3. **Checking.** Before the model runs, the server checks every passage against [`server/handbook-corpus.json`](server/handbook-corpus.json) (a SHA-256 of each passage and who may open each document): the passage must match its document exactly and the asker's role must be allowed to open it, otherwise the request is refused. After the model answers, quotes are looked up verbatim in the passages; anything not found is removed and counted.
 4. **Limits.** A Durable Object (`HandbookMeter`, SQLite storage) keeps a daily budget of 8,000 Neurons (Workers AI gives 10,000 a day for free), 40 questions per IP per day and a same-day cache. When a limit is reached, or the connection drops, the app switches to search mode and says why.
 
-In this demo, access control runs in the browser. A real deployment enforces it on the server, before any passage leaves it.
+The demo has no passwords, so the role comes from the browser; in a real deployment it comes from the company's sign-in, and the documents themselves stay on the server. Documents you add yourself never leave your browser except as the passages sent with a question.
 
 <img src="docs/phone.webp" alt="A customer care agent asking on a phone during a call" width="300">
 
@@ -55,6 +56,7 @@ npm run check            # every screen at 1440, 1024 and 375 px in both languag
 npm run shots            # screenshots
 npm run video -- en      # records the walkthrough from the running demo; video-phone for the phone cut
 npm run samples          # rebuilds the sample PDFs in public/samples/
+npm run corpus           # rebuilds server/handbook-corpus.json after the documents change
 ```
 
 Screenshots, reports and videos are written to `output/`.

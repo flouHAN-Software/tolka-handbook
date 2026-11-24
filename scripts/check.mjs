@@ -589,8 +589,13 @@ try {
     const text = () => page.evaluate(() => document.body.innerText);
     const as = async (name) => { await page.click(`.si-row:has-text("${name}") .btn`); await page.waitForTimeout(300); };
     await open(page, 'en', 'light', 'ask');
+    const first = (await page.textContent('h1')) === 'Ask the Handbook' && (await page.locator('.signin').count()) === 0
+      && (await page.textContent('.start-who p'))?.includes('Ciarán Byrne, claims handler');
+    (first ? ok : fail)('ilk ziyaret: giriş ekranı yok, Sor ekranı Ciarán (hasar uzmanı) olarak açılıyor ve bu yazıyor');
+    await page.click('.start-who .linkish');
+    await page.waitForTimeout(250);
     const h = await page.textContent('h1');
-    (h === 'Who are you signing in as?' && (await page.locator('.si-row').count()) === 4 ? ok : fail)('giriş: ilk girişte dört deneme hesabı');
+    (h === 'Who are you signing in as?' && (await page.locator('.si-row').count()) === 4 ? ok : fail)('giriş: "Switch role" dört deneme hesabını gösteriyor');
     ((await text()).includes('no password') ? ok : fail)('giriş: parola olmadığı ve gerçek kurulumda sunucuda denetlendiği yazıyor');
     if (SHOTS) await page.screenshot({ path: join(OUT, '1440', 'giris-en-light.png') });
     await axeCheck(page, 'giriş 1440');
@@ -604,7 +609,12 @@ try {
     const careRows = await page.locator('.lib-table tbody tr').count();
     const careText = await text();
     (careRows === 8 && !careText.includes('Claims Handling Manual') && !careText.includes('Delegated Authority') ? ok : fail)(`rol (care): 8 belge, hasar talimatı ve yetki limitleri yok (${careRows})`);
-    ((await page.locator('.lib-add').count()) === 0 ? ok : fail)('rol (care): "Add a document" düğmesi yok');
+    await page.click('.lib-add');
+    await page.waitForTimeout(200);
+    const demoNote = (await page.locator('dialog.add[open] .add-demo').count()) === 1 && (await page.textContent('dialog.add .add-demo'))?.includes('anyone can add');
+    (demoNote ? ok : fail)('rol (care): demoda belge ekleyebiliyor; pencerede gerçek kurulumda bunun bilgi yönetiminin işi olduğu yazıyor');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
     await page.goto(`${BASE}/#/documents/claims-manual`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(200);
     const denied = await text();
@@ -737,8 +747,8 @@ try {
     const shown = (await page.locator('dialog.guide[open]').count()) === 1 && (await page.textContent('#g-h')) === 'How the Handbook works';
     (shown ? ok : fail)(`${tag} ilk girişte rehber açılıyor`);
     const g = (await page.textContent('dialog.guide')) ?? '';
-    (g.includes('What each screen is for') && g.includes('Try these first') && g.includes('Look for:') && !/Ctrl|⌘|Esc\b/.test(g) ? ok : fail)(`${tag} amaç, ekranlar, önce denenecekler, neye bakılacak; kısayol işareti yok`);
-    ((await page.locator('.g-tries li').count()) === 5 ? ok : fail)(`${tag} 5 deneme, her birinde düğme`);
+    (g.includes('What each screen is for') && g.includes('Try these first') && g.includes('Look for:') && g.includes('You’re in as Ciarán Byrne') && !/Ctrl|⌘|Esc\b/.test(g) ? ok : fail)(`${tag} amaç, hangi rolle girildiği, ekranlar, önce denenecekler, neye bakılacak; kısayol işareti yok`);
+    ((await page.locator('.g-tries li').count()) === 4 && (await page.locator('.g-tries li .btn', { hasText: 'Add a PDF' }).count()) === 1 ? ok : fail)(`${tag} 4 deneme (biri kendi PDF'iniz), her birinde düğme`);
     if (SHOTS) await page.screenshot({ path: join(OUT, size.id, 'rehber-en-light.png') });
     const a = await page.evaluate(audit);
     (a.pageOverflow <= 0 && !a.small.length ? ok : fail)(`${tag} taşma ve küçük yazı yok${a.small[0] ? ' · ' + a.small[0] : ''}`);
@@ -780,6 +790,45 @@ try {
     await page.waitForTimeout(200);
     ((await page.locator('dialog.guide[open]').count()) === 0 ? ok : fail)(`${tag} Esc rehberi kapatıyor`);
     (errors.length ? fail : ok)(`${tag} sayfa hatası yok${errors.length ? ' · ' + errors[0] : ''}`);
+    await ctx.close();
+  }
+
+  // 13) Kendi belgenizle deneyin: Sor ekranındaki kart, hızlı ekleme, Türkçe PDF'e Türkçe soru, kapsamı kaldırma
+  {
+    const ctx = await browser.newContext(SIZES[0].opts);
+    await ctx.addInitScript(searchOnly);
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    await open(page, 'tr', 'light', 'ask');
+    await page.click('.start-own .btn');
+    await page.waitForTimeout(250);
+    const quick = (await page.locator('dialog.add[open]').count()) === 1 && (await page.locator('dialog.add #add-version').count()) === 0
+      && (await page.textContent('#add-h')) === 'Kendi belgenizi ekleyin';
+    (quick ? ok : fail)('kendi belge: Sor ekranından hızlı ekleme açılıyor (yalnızca dosya ve ad)');
+    const firstSample = (await page.textContent('dialog.add .samples .linkish >> nth=0'))?.trim();
+    (firstSample === 'Türkçe personel el kitabı (metinli PDF)' ? ok : fail)('kendi belge: Türkçe arayüzde Türkçe örnek başta');
+    await page.click('dialog.add .samples .linkish >> nth=0');
+    await page.waitForTimeout(600);
+    await page.click('dialog.add button[type=submit]');
+    await page.waitForFunction(() => document.querySelector('.scope') && !/okunuyor/.test(document.querySelector('.scope').textContent), null, { timeout: 30000 });
+    ((await page.textContent('.scope-t'))?.includes('Yalnızca “Personel El Kitabı” içinde soruluyor') ? ok : fail)('kendi belge: soru kutusunun üstünde "Yalnızca … içinde soruluyor"');
+    if (SHOTS) await page.screenshot({ path: join(OUT, '1440', 'kendi-belge-tr-light.png') });
+    await page.fill('#ask-q', 'Yıllık izin kaç gün?');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(500);
+    const src = await page.evaluate(() => [...document.querySelectorAll('.qa:last-child .src-title, .qa:last-child .cite-doc, .qa:last-child .found-doc, .qa:last-child')].map((e) => e.textContent).join(' '));
+    (src.includes('Personel El Kitabı') && src.includes('16 iş günü') ? ok : fail)('kendi belge: Türkçe belgeye Türkçe soru doğru bölümü buluyor (16 iş günü)');
+    await page.click('.scope .linkish');
+    await page.waitForTimeout(200);
+    ((await page.locator('.scope').count()) === 0 ? ok : fail)('kendi belge: "Bütün belgelere sor" kapsamı kaldırıyor');
+    // Belge kartından "Yalnızca bu belgeye sor"
+    await page.goto(`${BASE}/#/documents/eow-guide`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(250);
+    await page.click('.detail-ask');
+    await page.waitForTimeout(300);
+    (page.url().endsWith('#/ask') && (await page.textContent('.scope-t'))?.includes('Escape of Water Claims Guide') ? ok : fail)('belge kartı: "Yalnızca bu belgeye sor" Sor ekranını o belgeyle açıyor');
+    (errors.length ? fail : ok)(`kendi belge: sayfa hatası yok${errors.length ? ' · ' + errors[0] : ''}`);
     await ctx.close();
   }
 } finally {

@@ -4,6 +4,7 @@ import { DocText } from '../../components/Text';
 import { ROLE_GRADE, answerLevel, passageOf, type AnswerData, type Cite } from '../../data/answer';
 import { markHandoff } from '../../data/conversations';
 import { docById, review } from '../../data/library';
+import { turkishDoc } from '../../lib/search';
 import { date } from '../../lib/format';
 import { getLang, t } from '../../lib/i18n';
 import { currentRole } from '../../lib/role';
@@ -12,7 +13,7 @@ import type { Pick } from './Ask';
 
 const time = (iso: string) => new Date(iso).toLocaleTimeString(getLang() === 'tr' ? 'tr-TR' : 'en-IE', { hour: '2-digit', minute: '2-digit' });
 const day = (iso: string) => date(iso.slice(0, 10));
-const FALLBACK: Record<string, Key> = { quota: 'fb.quota', rate: 'fb.rate', offline: 'fb.offline' };
+const FALLBACK: Record<string, Key> = { quota: 'fb.quota', rate: 'fb.rate', offline: 'fb.offline', access: 'fb.access' };
 
 const Ok = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -33,7 +34,7 @@ export function AnswerView({ a, convId, pick, onPick, onAnnounce }: {
   const sources = [...new Set(a.cites.map((c) => c.docId))];
   const wording = a.wording ? docById(a.wording.docId) : undefined;
   const notSearched = a.notSearched.map((n) => `${docById(n.docId)?.title ?? n.docId} (${t(n.why === 'failed' ? 'ans.failed' : 'ans.processing')})`);
-  const turkish = /[çğıöşü]/i.test(a.q);
+  const turkish = /[çğıöşü]/i.test(a.q) && a.cites.some((c) => { const d = docById(c.docId); return !!d && !turkishDoc(d); });
   const on = (i: number) => pick?.answerId === a.id && pick.i === i;
   const show = (i: number) => onPick({ answerId: a.id, i });
 

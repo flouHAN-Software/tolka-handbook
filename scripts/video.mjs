@@ -20,6 +20,8 @@ const L = {
   en: {
     fraud: 'What are the fraud indicators in escape of water claims?',
     excess: 'What is the escape of water excess?',
+    sample: 'Home Emergency Cover',
+    own: 'How much do you pay for each emergency?',
     c: [
       'An internal document assistant for a home insurer. The first visit explains each screen and what to try.',
       'The answer is written only from the passages it found, and it notices that two documents disagree.',
@@ -27,6 +29,7 @@ const L = {
       'With a date of loss before March 2026, the 2024.2 wording applies, and the answer says why.',
       'Each role sees different documents. An investigator gets an answer from the fraud indicators.',
       'A claims handler asking the same question gets nothing from that document, not even its name.',
+      'Your own PDF works too: the answer comes only from that document, and the file stays in your browser.',
       'Every document has an owner, a review date and versions. Two versions compare word for word.',
       'Questions the documents couldn’t answer reach the Knowledge team, grouped by what is missing.',
       'Concept project by flouHAN Software · flouhan.com'
@@ -35,6 +38,8 @@ const L = {
   tr: {
     fraud: 'Su kaçağı dosyalarında suistimal göstergeleri neler?',
     excess: 'Su kaçağı muafiyeti ne kadar?',
+    sample: 'Türkçe personel',
+    own: 'Yıllık izin kaç gün? Kullanmadığım izinler ne olur?',
     c: [
       'Bir konut sigortacısının iç doküman asistanı. İlk girişte her ekranın ne işe yaradığı ve önce ne deneneceği anlatılır.',
       'Yanıt yalnızca bulunan bölümlerden yazılır; iki belgenin çeliştiğini de fark eder.',
@@ -42,6 +47,7 @@ const L = {
       'Hasar Mart 2026’dan önceyse 2024.2 şartları geçerlidir; yanıt bunun nedenini de söyler.',
       'Her rol farklı belgeleri görür. Araştırmacı yanıtını suistimal göstergelerinden alır.',
       'Aynı soruyu soran hasar uzmanı o belgeden hiçbir şey almaz; belgenin adı bile geçmez.',
+      'Kendi PDF dosyanız da olur: yanıt yalnızca o belgeden gelir, dosya tarayıcınızda kalır.',
       'Her belgenin bir sorumlusu, gözden geçirme tarihi ve sürümleri var. İki sürüm kelime kelime karşılaştırılır.',
       'Belgelerin yanıtlayamadığı sorular, eksiğin türüne göre gruplanıp bilgi yönetimine düşer.',
       'flouHAN Software konsept çalışması · flouhan.com'
@@ -133,7 +139,24 @@ await answered();
 await cap(6, L.c[5]);
 await pause(3800);
 
-// 7. Belgeler ve sürüm karşılaştırması
+// 7. Kendi PDF'iniz: yalnızca o belgeye sorulur
+await click('.convo-head .btn');
+await pause(500);
+await click('.start-own .btn');
+await pause(600);
+await click(page.locator('dialog.add .samples .linkish', { hasText: L.sample }));
+await pause(700);
+await click('dialog.add button[type=submit]');
+await page.waitForFunction(() => document.querySelector('.scope') && !/reading|okunuyor/.test(document.querySelector('.scope').textContent), null, { timeout: 30000 });
+await pause(500);
+await type(L.own);
+await answered();
+await cap(7, L.c[6]);
+await pause(4600);
+await click('.scope .linkish');
+await pause(400);
+
+// 8. Belgeler ve sürüm karşılaştırması
 await click('.side-list a[href="#/documents"]');
 await pause(800);
 await click('.lib-table a[href="#/documents/home-policy-2026"]');
@@ -141,19 +164,19 @@ await pause(1000);
 await click('.detail-open');
 await pause(900);
 await click('.vw-tools .btn');
-await cap(7, L.c[6]);
+await cap(8, L.c[7]);
 await pause(4200);
 
-// 8. Yanıt kalitesi (bilgi yönetimi)
+// 9. Yanıt kalitesi (bilgi yönetimi)
 await switchTo('Declan');
 await click('.side-list a[href="#/quality"]');
 await pause(800);
 await click('.iq-row >> nth=0');
-await cap(8, L.c[7]);
+await cap(9, L.c[8]);
 await pause(4200);
 
 // Son
-await cap(null, L.c[8]);
+await cap(null, L.c[9]);
 await pause(2600);
 const res = await rec.stop();
 await b.close();

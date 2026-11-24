@@ -2,5 +2,6 @@ node_modules/
 dist/
 output/
 .wrangler/
+.corpus/
 .dev.vars
 *.tsbuildinfo

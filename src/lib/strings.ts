@@ -181,8 +181,8 @@ export const STR = {
   'nav.guide': ['How it works', 'Nasıl kullanılır'],
   'g.title': ['How the Handbook works', 'Handbook nasıl çalışır?'],
   'g.what': [
-    'Tolka Handbook is the internal document assistant of Tolka Insurance, a home insurer in Dublin. Staff ask a question and get an answer built only from Tolka’s own documents.',
-    'Tolka Handbook, Dublin’deki konut sigortacısı Tolka Insurance’ın iç doküman asistanıdır. Çalışanlar soru sorar; yanıt yalnızca Tolka’nın kendi belgelerinden kurulur.'
+    'Tolka Handbook is the internal document assistant of Tolka Insurance, a home insurer in Dublin. Staff ask a question and get an answer built only from Tolka’s own documents, with the passage behind every sentence. Tolka, its people and its documents are made up for this concept project.',
+    'Tolka Handbook, Dublin’deki konut sigortacısı Tolka Insurance’ın iç doküman asistanıdır. Çalışanlar soru sorar; yanıt yalnızca Tolka’nın kendi belgelerinden kurulur ve her cümlenin dayandığı bölüm gösterilir. Tolka, çalışanları ve belgeleri bu konsept çalışma için kurgulandı.'
   ],
   'g.what2': [
     'Every answer shows the passage it comes from, says so when the documents don’t cover something, and uses only the documents your role can open. Tolka, its people and its documents are made up for this concept project.',
@@ -390,6 +390,7 @@ export const STR = {
   'add.sample': ['No file to hand? Use a sample:', 'Elinizde dosya yoksa örneklerden birini kullanın:'],
   'add.sample.text': ['Home Emergency Cover (PDF with text)', 'Acil Durum Teminatı (metinli PDF)'],
   'add.sample.scan': ['Boiler service leaflet (scanned PDF)', 'Kombi bakım broşürü (taranmış PDF)'],
+  'add.sample.tr': ['Staff handbook in Turkish (PDF with text)', 'Türkçe personel el kitabı (metinli PDF)'],
   'add.f.title': ['Title', 'Belgenin adı'],
   'add.f.kind': ['Type', 'Türü'],
   'add.f.version': ['Version', 'Sürüm'],
@@ -415,7 +416,7 @@ export const STR = {
   'err.version': ['Enter a version, for example 1.0', 'Bir sürüm yazın, örneğin 1.0'],
   'err.inforce': ['Enter the date the document comes into force', 'Belgenin yürürlüğe girdiği tarihi girin'],
   'add.added': ['{title} was added. It is being read now.', '{title} eklendi, şimdi okunuyor.'],
-  'add.added.hidden': ['{title} was added. Only Special Investigations can open it, so it isn’t in your list.', '{title} eklendi. Yalnızca Suistimal araştırma açabildiği için listenizde görünmüyor.'],
+  'add.added.hidden': ['{title} was added. Your role can’t open documents at that classification, so it isn’t in your list.', '{title} eklendi. Rolünüz bu gizlilik düzeyindeki belgeleri açamadığı için listenizde görünmüyor.'],
   'add.ready': ['{title} has been read: {n} passages. The assistant can now answer from it.', '{title} okundu: {n} bölüm. Asistan artık bu belgeden yanıt verebilir.'],
   // soru-yanıt
   'ask.label': ['Ask about a policy, claim or procedure', 'Poliçe, hasar ya da prosedürle ilgili sorunuz'],
@@ -536,6 +537,10 @@ export const STR = {
     'The answer service couldn’t be reached, so this answer comes from search mode.',
     'Yanıt hizmetine ulaşılamadı; bu yanıt arama modundan geliyor.'
   ],
+  'fb.access': [
+    'The server refused: a passage didn’t match its document, or your role can’t open it. The closest passages are shown instead.',
+    'Sunucu reddetti: bir bölüm belgesiyle eşleşmedi ya da rolünüz o belgeyi açamıyor. Bunun yerine en yakın bölümler gösteriliyor.'
+  ],
   'fb.busy': [
     'Workers AI didn’t respond in time, so this answer comes from search mode. Try again in a minute.',
     'Workers AI zamanında yanıt vermedi; bu yanıt arama modundan geliyor. Bir dakika sonra yeniden deneyin.'
@@ -556,8 +561,8 @@ export const STR = {
   ],
   'ab.use': ['How to use it', 'Nasıl kullanılır'],
   'ab.use1': [
-    'Choose who you are on the sign-in screen. Each of the four roles opens different documents, and you can switch at any time from the menu.',
-    'Giriş ekranında kim olduğunuzu seçin. Dört rolün her biri farklı belgeleri açar; menüden istediğiniz zaman hesap değiştirebilirsiniz.'
+    'The demo opens as Ciarán, a claims handler. Each of the four roles opens different documents, and you can switch at any time from the menu.',
+    'Demo, hasar uzmanı Ciarán olarak açılır. Dört rolün her biri farklı belgeleri açar; menüden istediğiniz zaman rol değiştirebilirsiniz.'
   ],
   'ab.use2': ['Ask in your own words, or start from a suggestion on the Ask screen.', 'Sorunuzu kendi cümlelerinizle yazın ya da Sor ekranındaki önerilerden biriyle başlayın.'],
   'ab.use3': [
@@ -569,8 +574,8 @@ export const STR = {
     'Hasar tarihi ekleyip muafiyeti yeniden sorun: yanıt, o tarihte yürürlükte olan poliçe şartlarına göre değişir.'
   ],
   'ab.use5': [
-    'Open Documents to see each document’s owner and review date, compare two versions, or add a PDF of your own.',
-    'Belgeler ekranında her belgenin sorumlusunu ve gözden geçirme tarihini görün, iki sürümü karşılaştırın ya da kendi PDF dosyanızı ekleyin.'
+    'Add a PDF of your own from the Ask screen and ask about it: the answers come only from that document. Documents shows each document’s owner and review date, and compares two versions.',
+    'Sor ekranından kendi PDF dosyanızı ekleyip ona soru sorun: yanıtlar yalnızca o belgeden gelir. Belgeler ekranında her belgenin sorumlusu ve gözden geçirme tarihi görünür, iki sürüm karşılaştırılır.'
   ],
   'ab.use6': [
     'Sign in as Declan, the knowledge manager, to see the questions the documents couldn’t answer.',
@@ -591,8 +596,8 @@ export const STR = {
   ],
   'ab.sk.search': ['Search', 'Arama'],
   'ab.sk.search.d': [
-    'BM25 ranking in the browser, with word stemming, a Turkish-to-English glossary and extra weight for the asker’s role. When the model can’t be reached, the app falls back to this search and says so on screen.',
-    'Tarayıcıda BM25 sıralaması; kök bulma, Türkçe–İngilizce sözlük ve soranın rolüne göre ek ağırlık. Modele ulaşılamazsa uygulama bu aramaya geçer ve bunu ekranda yazar.'
+    'BM25 ranking in the browser, with stemming for English and Turkish, a Turkish-to-English glossary and extra weight for the asker’s role. Search can be limited to one document. When the model can’t be reached, the app falls back to this search and says so on screen.',
+    'Tarayıcıda BM25 sıralaması; İngilizce ve Türkçe kök bulma, Türkçe–İngilizce sözlük ve soranın rolüne göre ek ağırlık. Arama tek bir belgeyle sınırlanabilir. Modele ulaşılamazsa uygulama bu aramaya geçer ve bunu ekranda yazar.'
   ],
   'ab.sk.docs': ['Document processing', 'Belge işleme'],
   'ab.sk.docs.d': [
@@ -601,8 +606,8 @@ export const STR = {
   ],
   'ab.sk.access': ['Role-based access', 'Rol bazlı yetkilendirme'],
   'ab.sk.access.d': [
-    'Four roles, each with its own documents. Every answer shows the classification of its most restricted source, and a document the role can’t open is never named.',
-    'Dört rol var ve her birinin kendi belgeleri. Her yanıtta dayandığı en kısıtlı belgenin gizlilik düzeyi yazar; rolün açamadığı belgenin adı hiç geçmez.'
+    'Four roles, each with its own documents. Search only looks at what the role can open, and the server checks again before the model runs: every passage must match its document word for word, and the role must be allowed to open it. Every answer shows the classification of its most restricted source, and a document the role can’t open is never named.',
+    'Dört rol var ve her birinin kendi belgeleri. Arama yalnızca rolün açabildiği belgelerde yapılır; model çalışmadan önce sunucu da denetler: her bölüm kendi belgesiyle kelimesi kelimesine eşleşmeli ve rol o belgeyi açabilmeli. Her yanıtta dayandığı en kısıtlı belgenin gizlilik düzeyi yazar; rolün açamadığı belgenin adı hiç geçmez.'
   ],
   'ab.sk.auto': ['Test and recording automation', 'Test ve kayıt otomasyonu'],
   'ab.sk.auto.d': [
@@ -616,8 +621,8 @@ export const STR = {
   ],
   'ab.sk.lang': ['Two languages', 'İki dil'],
   'ab.sk.lang.d': [
-    'The English and Turkish interfaces are written separately, not translated. Questions can be asked in Turkish about English documents.',
-    'İngilizce ve Türkçe arayüz birbirinden çevrilmedi, ayrı ayrı yazıldı. İngilizce belgeler hakkında Türkçe soru sorulabilir.'
+    'The English and Turkish interfaces are written separately, not translated. Questions can be asked in Turkish about the English documents, and a Turkish PDF can be added and asked about in Turkish.',
+    'İngilizce ve Türkçe arayüz birbirinden çevrilmedi, ayrı ayrı yazıldı. İngilizce belgeler hakkında Türkçe soru sorulabilir; Türkçe bir PDF eklenip ona Türkçe soru da sorulabilir.'
   ],
   'ab.tools': ['Languages and tools', 'Kullanılan diller ve araçlar'],
   'ab.tl.lang': ['Languages', 'Diller'],
@@ -664,6 +669,42 @@ export const STR = {
   'g.about': [
     'The languages, tools and techniques behind the app, and what the same structure could be used for, are on the About this project screen.',
     'Uygulamada kullanılan diller, araçlar ve teknikler ile aynı yapının başka nelerde kullanılabileceği “Bu proje hakkında” ekranında anlatılıyor.'
+  ],
+
+  // İlk ziyaret ve "kendi belgenizle deneyin"
+  'start.who': ['You are asking as {name}, {job}. Answers use only the documents this role can open.', '{name} ({job}) olarak soruyorsunuz. Yanıtlar yalnızca bu rolün açabildiği belgelerden gelir.'],
+  'start.switch': ['Switch role', 'Rolü değiştir'],
+  'own.title': ['Try it with your own document', 'Kendi belgenizle deneyin'],
+  'own.text': [
+    'Add a PDF and the answers will come only from it. The file is read in your browser and isn’t uploaded.',
+    'Bir PDF ekleyin; yanıtlar yalnızca o belgeden gelsin. Dosya tarayıcınızda okunur, bir sunucuya yüklenmez.'
+  ],
+  'own.add': ['Add a PDF', 'PDF ekleyin'],
+  'own.dialog': ['Add your own document', 'Kendi belgenizi ekleyin'],
+  'own.submit': ['Add and ask', 'Ekle ve sor'],
+  'own.ready': ['“{title}” is ready. Ask your question; answers come only from this document.', '“{title}” hazır. Sorunuzu yazın; yanıtlar yalnızca bu belgeden gelir.'],
+  'add.demo': [
+    'In this demo anyone can add a document. In a real set-up, adding documents belongs to the Knowledge team.',
+    'Bu demoda herkes belge ekleyebilir. Gerçek kurulumda belge eklemek bilgi yönetiminin işidir.'
+  ],
+  'scope.label': ['Search limited to one document', 'Arama tek belgeyle sınırlı'],
+  'scope.only': ['Asking only “{title}”', 'Yalnızca “{title}” içinde soruluyor'],
+  'scope.reading': ['being read, page {page} of {pages}', 'okunuyor, {pages} sayfanın {page}. sayfası'],
+  'scope.reading0': ['being read', 'okunuyor'],
+  'scope.failed': ['this file couldn’t be read, so there is nothing to search', 'bu dosya okunamadı, aranacak metin yok'],
+  'scope.clear': ['Ask all documents', 'Bütün belgelere sor'],
+  'd.askOnly': ['Ask only this document', 'Yalnızca bu belgeye sor'],
+  'g.role': ['You’re in as {name}, {job}. Each role sees different documents, and you can switch whenever you like.', '{name} ({job}) olarak girdiniz. Her rol farklı belgeleri görür; istediğiniz zaman değiştirebilirsiniz.'],
+  'g.role.go': ['Choose another role', 'Başka bir rol seçin'],
+  'g.t6': ['Add a PDF of your own and ask about it.', 'Kendi PDF dosyanızı ekleyip ona soru sorun.'],
+  'g.t6.look': [
+    'the answer comes only from your document, with its passage marked. The file stays in your browser.',
+    'yanıt yalnızca sizin belgenizden gelir, ilgili bölüm işaretlenir. Dosya tarayıcınızda kalır.'
+  ],
+  'g.t6.go': ['Add a PDF', 'PDF ekle'],
+  'g.more': [
+    'How answers are written and the tools behind the app are on the About this project screen.',
+    'Yanıtların nasıl yazıldığı ve uygulamada kullanılan araçlar “Bu proje hakkında” ekranında.'
   ]
 } as const satisfies Record<string, readonly [string, string]>;
 

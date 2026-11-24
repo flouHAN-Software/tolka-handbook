@@ -48,15 +48,13 @@ async function tap(sel) {
   await loc.tap({ timeout: 8000 });
 }
 
-await page.goto(`${BASE}/?lang=${LANG}&theme=light#/ask`, { waitUntil: 'networkidle' });
+await page.goto(`${BASE}/?lang=${LANG}&theme=light&as=care#/ask`, { waitUntil: 'networkidle' });
 await page.evaluate(() => document.fonts.ready);
 await pause(400);
 const rec = await record(ctx, page, TMP, { maxWidth: W * 3, maxHeight: H * 3 });
 
 await cap(1, L[0], 'low');
-await pause(1800);
-await tap('.si-row:has-text("Niamh") .btn');
-await pause(900);
+await pause(2200);
 await tap('.start-group >> nth=0 >> .suggest');
 await page.waitForFunction(() => !document.querySelector('[aria-busy="true"]'), null, { timeout: 40000 });
 await pause(600);

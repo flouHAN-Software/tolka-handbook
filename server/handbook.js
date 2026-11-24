@@ -12,8 +12,12 @@
 //   gün içinde önbellek var (HandbookMeter, SQLite depolamalı Durable Object). Sınır dolunca tarayıcı arama moduna döner.
 //   Yalnızca uygulamanın kendi sayfasından (ve yerel geliştirmede localhost'tan) gelen istek kabul edilir.
 //
-// Not: Yetki (hangi belgenin kime açık olduğu) bu demoda tarayıcıda uygulanır; gerçek kurulumda sunucuda uygulanır.
+// Yetki sunucuda da denetlenir: gelen her bölüm, kurumun belge listesinde (handbook-corpus.json) o belgeye ait olmalı,
+//   metni birebir aynı olmalı ve soran rol o belgeyi açabilmeli; olmazsa model çalıştırılmaz (403 "access").
+//   Kullanıcının kendi eklediği belgeler ("up-" ile başlar) yalnızca onun tarayıcısındadır; metni oradan gelir.
+//   Demoda parola olmadığı için rol tarayıcıdan gelir; gerçek kurulumda kurumun girişinden (SSO) gelir.
 import { DurableObject } from 'cloudflare:workers';
+import CORPUS from './handbook-corpus.json';
 
 const MODELS = {
   gemma: { id: '@cf/google/gemma-4-26b-a4b-it', name: 'Gemma 4', inN: 9091, outN: 27273, extra: { chat_template_kwargs: { enable_thinking: false } } },
@@ -23,7 +27,8 @@ const MODELS = {
 };
 const DEFAULT_MODEL = 'gemma';
 // İstem değişince önbellekteki eski yanıtlar kullanılmasın
-const PROMPT_V = 2;
+const PROMPT_V = 3;
+const ROLES = ['care', 'claims', 'siu', 'knowledge'];
 const DAILY_NEURONS = 8000;
 const PER_IP_DAILY = 40;
 
@@ -81,16 +86,25 @@ export async function handbook(request, env, url) {
   const q = clean(b?.q, 600);
   const lang = b?.lang === 'tr' ? 'tr' : 'en';
   const asker = clean(b?.asker, 80);
+  const role = ROLES.includes(b?.role) ? b.role : '';
   const passages = Array.isArray(b?.passages)
-    ? b.passages.slice(0, 6).map((p) => ({ label: clean(p?.label, 200), overdue: clean(p?.overdue, 60), text: clean(p?.text, 1800) })).filter((p) => p.text)
+    ? b.passages.slice(0, 6).map((p) => ({ label: clean(p?.label, 200), overdue: clean(p?.overdue, 60), text: clean(p?.text, 1800), doc: clean(p?.doc, 80), key: clean(p?.key, 160) })).filter((p) => p.text)
     : [];
-  if (q.length < 3 || !passages.length) return json({ ok: false, reason: 'bad' }, 400);
+  if (q.length < 3 || !passages.length || !role) return json({ ok: false, reason: 'bad' }, 400);
+  // Yetki: kurumun belgesinden gelen her bölüm gerçekten o belgede olmalı ve rol o belgeyi açabilmeli
+  for (const p of passages) {
+    if (/^up-[a-z0-9]+$/.test(p.doc) && p.key.startsWith(p.doc + '#')) continue;
+    const d = CORPUS.docs[p.doc];
+    if (!d || !d.audience.includes(role) || !p.key.startsWith(p.doc + '#') || d.keys[p.key] !== (await sha(p.text))) {
+      return json({ ok: false, reason: 'access' }, 403);
+    }
+  }
   // Modeli yalnızca yerel denemede seçmek mümkün (karşılaştırma için)
   const key = local && MODELS[b?.model] ? b.model : DEFAULT_MODEL;
   const model = MODELS[key];
 
   const meter = env.HANDBOOK.get(env.HANDBOOK.idFromName('meter'));
-  const cacheKey = await sha(JSON.stringify([PROMPT_V, key, lang, asker, q.toLowerCase(), passages]));
+  const cacheKey = await sha(JSON.stringify([PROMPT_V, key, lang, role, asker, q.toLowerCase(), passages]));
   const hit = await meter.cacheGet(cacheKey);
   if (hit) return json({ ...hit, cached: true });
 
@@ -133,7 +147,7 @@ export async function handbook(request, env, url) {
   return json(result);
 }
 
-const SYSTEM = (lang) => `You answer questions from staff at Tolka Insurance, a home insurer in Ireland. Use only the numbered passages from its internal Handbook in the user message.
+const SYSTEM = (lang) => `You answer questions from staff at Tolka Insurance, a home insurer in Ireland. Use only the numbered passages in the user message: they come from its internal Handbook, or from a document the user added themselves.
 
 Rules:
 - Use only the passages. Do not use outside knowledge and do not guess.
@@ -145,8 +159,8 @@ Rules:
 - "I", "me" and "myself" in the question mean the person asking; use their role to apply limits that depend on it.
 - Answer only what was asked. Do not mention topics the question did not raise, and never list things the documents do not cover unless they are part of the question.
 - Use "partial" only when part of what was asked is not covered by the passages.
-- ${lang === 'tr' ? 'Write the answer in Turkish, addressing the reader formally (siz). Keep insurance terms accurate.' : 'Write the answer in plain British English.'} Calm, direct, at most 110 words, no headings.
-- Give one or two short quotes in the "quotes" field only, copied exactly, word for word, from the passages, each under 30 words. Never change a quote, never put a quote inside "answer". Quotes stay in English.
+- ${lang === 'tr' ? "Write the answer in natural Turkish, the way an experienced Turkish colleague would say it, not a translation from English: short sentences, active voice, formal 'siz'. Avoid stiff, translated phrasing; for example write 'Ev bu gece kalınamayacak durumdaysa…', not 'Eğer ev bu gece içinde yaşanabilir durumda değilse…'. Keep document titles and insurance terms accurate." : 'Write the answer in plain British English.'} Calm, direct, at most 110 words, no headings.
+- Give one or two short quotes in the "quotes" field only, copied exactly, word for word, from the passages, each under 30 words. Never change a quote, never put a quote inside "answer". Quotes stay in the language of the passage.
 
 Reply with JSON only, no other text:
 {"verdict":"answered","answer":"...","quotes":[{"n":1,"text":"..."}]}

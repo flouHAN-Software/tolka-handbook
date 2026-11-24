@@ -1,20 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
-import { useAccount, type AccountId } from '../lib/account';
+import { ACCOUNTS, useAccount, type AccountId } from '../lib/account';
 import { t, usePrefs } from '../lib/i18n';
 import { go } from '../lib/router';
+import { ADD_KEY } from '../lib/scope';
 import { resetDemo } from '../lib/storage';
+import { switchAccount } from './Shell';
 import type { Key } from '../lib/strings';
 
 // Rehber: uygulamanın amacı, hangi ekranın ne işe yaradığı, önce ne denenmeli ve her denemede neye bakılmalı.
 // İlk girişte açılır, menüdeki "Nasıl kullanılır" ile yeniden açılır. Klavye kısayolu anlatılmaz (kullanıcı kuralı).
-type Try = { key: string; as: AccountId; route: 'ask' | 'documents'; q?: { en: string; tr: string }; loss?: string; doc?: string };
+type Try = { key: string; as: AccountId; route: 'ask' | 'documents' | 'add'; q?: { en: string; tr: string }; loss?: string; doc?: string };
 
 const TRIES: Try[] = [
   { key: 'g.t1', as: 'ciaran', route: 'ask', q: { en: 'What is the escape of water excess?', tr: 'Su kaçağı muafiyeti ne kadar?' } },
   { key: 'g.t2', as: 'ciaran', route: 'ask', q: { en: 'What is the escape of water excess?', tr: 'Su kaçağı muafiyeti ne kadar?' }, loss: '2026-02-20' },
   { key: 'g.t3', as: 'aoife', route: 'ask', q: { en: 'What are the fraud indicators in escape of water claims?', tr: 'Su kaçağı dosyalarında suistimal göstergeleri neler?' } },
-  { key: 'g.t4', as: 'niamh', route: 'ask', q: { en: 'Does the policy cover damage caused by a drone?', tr: 'Drone çarpması hasarı teminat kapsamında mı?' } },
-  { key: 'g.t5', as: 'ciaran', route: 'documents', doc: 'home-policy-2026' }
+  { key: 'g.t6', as: 'ciaran', route: 'add' }
 ];
 
 /** Rehberden başlatılan deneme: Sor ekranı açılınca soruyu kendisi sorar */
@@ -26,6 +27,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
   const { account, set: setAccount } = useAccount();
   const [resetting, setResetting] = useState(false);
   const tr = prefs.lang === 'tr';
+  const who = account ?? ACCOUNTS[1];
 
   useEffect(() => {
     const d = ref.current;
@@ -41,8 +43,18 @@ export function Guide({ onClose }: { onClose: () => void }) {
     if (x.q) {
       try { sessionStorage.setItem(TRY_KEY, JSON.stringify({ q: tr ? x.q.tr : x.q.en, loss: x.loss })); } catch { /* depolama kapalı */ }
     }
-    if (account?.id !== x.as) setAccount(x.as);
-    if (x.route === 'ask') go('ask');
+    // Kendi belgesini ekleyecek kişi rolünü korur; öbür denemeler gereken role geçer
+    const switching = x.route !== 'add' && account?.id !== x.as;
+    if (switching) setAccount(x.as);
+    if (!account) setAccount(x.as);
+    if (x.route === 'add') {
+      try { sessionStorage.setItem(ADD_KEY, '1'); } catch { /* depolama kapalı */ }
+      go('ask');
+      window.dispatchEvent(new Event('tolka:add'));
+    } else if (x.route === 'ask') {
+      go('ask');
+      if (!switching) window.dispatchEvent(new Event('tolka:try'));
+    }
     else go('documents', x.doc!, 'view');
     close();
   };
@@ -70,7 +82,10 @@ export function Guide({ onClose }: { onClose: () => void }) {
 
         <section className="g-sec">
           <p className="g-lead">{t('g.what')}</p>
-          <p>{t('g.what2')}</p>
+          <div className="g-role">
+            <p>{t('g.role', { name: who.name, job: t(`job.${who.role}` as const).toLocaleLowerCase(tr ? 'tr' : 'en') })}</p>
+            <button type="button" className="linkish" onClick={() => { close(); switchAccount(); }}>{t('g.role.go')}</button>
+          </div>
         </section>
 
         <section className="g-sec" aria-labelledby="g-screens">
@@ -98,13 +113,10 @@ export function Guide({ onClose }: { onClose: () => void }) {
           </ol>
         </section>
 
-        <section className="g-sec" aria-labelledby="g-how">
-          <h3 id="g-how">{t('g.how')}</h3>
-          <p>{t('g.how1')}</p>
-          <p>{t('g.how2')}</p>
-          <p>{t('g.about')}</p>
-          <button type="button" className="btn" onClick={() => { if (!account) setAccount('ciaran'); go('about'); close(); }}>{t('nav.about')}</button>
-        </section>
+        <p className="g-more">
+          {t('g.more')}{' '}
+          <button type="button" className="linkish" onClick={() => { go('about'); close(); }}>{t('nav.about')}</button>
+        </p>
 
         <footer className="g-foot">
           <button type="button" className="btn primary" onClick={() => { if (!account) setAccount('ciaran'); go('ask'); close(); }}>{t('g.start')}</button>

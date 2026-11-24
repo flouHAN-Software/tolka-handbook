@@ -60,9 +60,45 @@ export function stem(w: string) {
   return w;
 }
 
+/** Türkçe kök: ilk beş harf. Ekler sözcüğün sonuna geldiği için ("poliçenin", "poliçede" → "poliç") Türkçe aramada
+ *  basit ve dayanıklı bir yöntemdir. Yalnızca Türkçe belgelerde ve Türkçe sorularda kullanılır. */
+export function trStem(w: string) {
+  if (/^\d/.test(w)) return w;
+  if (w.length > 5) return w.slice(0, 5);
+  // kısa sözcükte iyelik/belirtme eki: "günü" → "gün", "yılı" → "yıl"
+  if (w.length === 4 && /[aeıioöuü]$/.test(w)) return w.slice(0, 3);
+  return w;
+}
+
+const TR_CHARS = /[çğıöşüÇĞİÖŞÜ]/g;
+const isTurkishDoc = new WeakMap<Doc, boolean>();
+/** Belgenin dili: Türkçeye özgü harfler metnin harflerinin %1'inden fazlaysa Türkçe sayılır */
+export function turkishDoc(doc: Doc) {
+  let v = isTurkishDoc.get(doc);
+  if (v !== undefined) return v;
+  let text = '';
+  for (const s of doc.sections) {
+    text += s.title + ' ';
+    for (const c of s.clauses) for (const b of c.blocks) {
+      if (b.t === 'p' || b.t === 'note') text += b.text + ' ';
+      else if (b.t === 'list') text += b.items.map((i) => i.text).join(' ') + ' ';
+      else if (b.t === 'table') text += b.rows.flat().join(' ') + ' ';
+      if (text.length > 6000) break;
+    }
+    if (text.length > 6000) break;
+  }
+  const letters = (text.match(/\p{L}/gu) ?? []).length;
+  v = letters > 0 && (text.match(TR_CHARS) ?? []).length / letters > 0.01;
+  isTurkishDoc.set(doc, v);
+  return v;
+}
+
 export function words(text: string) {
   return text
+    // "İ" küçültülünce i + birleşik nokta olur ve sözcüğü böler ("İptal" → "i", "ptal")
+    .replace(/İ/g, 'i')
     .toLocaleLowerCase('en')
+    .replace(/\u0307/g, '')
     .replace(/\*\*/g, '')
     .replace(/[’']/g, '')
     .split(/[^a-z0-9€çğıöşüâîûé]+/i)
@@ -74,6 +110,8 @@ const plain = (s: string) => s.replace(/\*\*/g, '');
 /** Bir belgenin bütün bölümleri */
 export function passagesOf(doc: Doc): Passage[] {
   const out: Passage[] = [];
+  // Türkçe belge (ör. kullanıcının eklediği PDF): sözcükler Türkçe köke indirgenir
+  const root = turkishDoc(doc) ? trStem : stem;
   for (const section of doc.sections) {
     for (const c of section.clauses) {
       const head = [section.title, c.heading].filter(Boolean).join(' · ');
@@ -85,7 +123,7 @@ export function passagesOf(doc: Doc): Passage[] {
             key: `${doc.id}#${loc.clause}:${loc.block}:${loc.item ?? ''}:${loc.row ?? ''}`,
             doc, section, loc, ref, text, quote,
             // başlık sözcükleri iki kez sayılır: "Escape of water" başlıklı bölüm su sorusunda öne çıksın
-            tokens: [...words(head), ...words(head), ...words(extra), ...words(text)].map(stem)
+            tokens: [...words(head), ...words(head), ...words(extra), ...words(text)].map(root)
           });
         };
         if (b.t === 'p' || b.t === 'note') {
@@ -107,7 +145,7 @@ export function passagesOf(doc: Doc): Passage[] {
 /** Sorgu: her soru kelimesi bir "grup"; grubun herhangi bir karşılığı bölümde geçerse kelime karşılanmış sayılır.
  *  Türkçe soruda yalnızca sözlükte karşılığı olan kelimeler (ve belgede aynen geçenler) hesaba girer. */
 export function queryGroups(q: string, turkish = false, inCorpus: (t: string) => boolean = () => true): { groups: string[][]; dropped: number } {
-  const lower = q.toLocaleLowerCase('tr');
+  const lower = q.replace(/İ/g, 'i').toLocaleLowerCase('tr');
   const groups: string[][] = [];
   let dropped = 0;
   // Türkçe çok kelimeli terimler önce
@@ -116,13 +154,15 @@ export function queryGroups(q: string, turkish = false, inCorpus: (t: string) =>
     // Tutarlar ve sayılar kelime gibi eşleştirilmez ("€12,000" sorusu "€25,000" satırını öne çıkarıyordu)
     if (!raw || STOP.has(raw) || raw.length < 2 || /^€?\d+$/.test(raw)) continue;
     const alts = new Set<string>([stem(raw)]);
+    // Türkçe soru Türkçe belgede de aranabilsin: Türkçe kök de bir karşılık
+    if (turkish) alts.add(trStem(raw));
     if (EN_SYN[raw]) words(EN_SYN[raw]).forEach((w) => alts.add(stem(w)));
     // Türkçe kök: en uzun eşleşen anahtar
     const key = Object.keys(TR_EN).filter((k) => !k.includes(' ') && k.length >= 2 && raw.startsWith(k)).sort((a, b) => b.length - a.length)[0];
     const tr = !!key && (key.length >= 3 || raw === key);
     if (tr) words(TR_EN[key]).forEach((w) => alts.add(stem(w)));
     // Türkçe soruda sözlükte olmayan kelime aranmaz ama "belgelerde yok" sayılır
-    if (turkish && !tr && !inCorpus(stem(raw)) && !EN_SYN[raw]) {
+    if (turkish && !tr && !inCorpus(stem(raw)) && !inCorpus(trStem(raw)) && !EN_SYN[raw]) {
       dropped++;
       continue;
     }

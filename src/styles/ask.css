@@ -897,3 +897,71 @@ tr.hit::before {
 .cite-glue {
   white-space: nowrap;
 }
+
+/* İlk ekran: kimin olarak sorulduğu ve "kendi belgenizle deneyin" */
+.start-who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-top: 16px;
+  color: var(--text-2);
+}
+.start-who .linkish {
+  font-weight: 600;
+}
+.start-own {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-top: 20px;
+  padding: 16px 20px;
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  background: var(--surface);
+}
+.start-own h2 {
+  font-size: 17px;
+  line-height: 24px;
+  font-weight: 650;
+}
+.start-own p {
+  color: var(--text-2);
+  max-width: 56ch;
+}
+.start-own .btn {
+  flex: none;
+}
+
+/* Arama tek belgeyle sınırlıyken soru kutusunun üstünde */
+.scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--text);
+  background: var(--sunk);
+  font-size: 15px;
+  line-height: 22px;
+}
+.scope-t b {
+  font-weight: 650;
+}
+@media (max-width: 767px) {
+  .start-own {
+    padding: 14px 16px;
+  }
+  .start-own .btn {
+    width: 100%;
+  }
+}
+@media (forced-colors: active) {
+  .scope {
+    border: 1px solid CanvasText;
+  }
+}

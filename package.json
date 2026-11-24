@@ -12,6 +12,7 @@
     "video": "node scripts/video.mjs",
     "video-phone": "node scripts/video-phone.mjs",
     "samples": "node scripts/make-samples.mjs",
+    "corpus": "node scripts/export-corpus.mjs",
     "server": "npm run build && npx wrangler@4.168.0 dev --port 8787",
     "deploy": "npm run build && npx wrangler@4.168.0 deploy"
   },

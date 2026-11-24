@@ -29,12 +29,17 @@ function read(): Account | null {
       return hit;
     }
   }
+  // İlk ziyaret: giriş ekranı yerine doğrudan Sor ekranı açılır; varsayılan rol hasar uzmanı (Ciarán).
+  // Öbür roller menüdeki "Hesap değiştir" ile seçilir.
   try {
     const id = localStorage.getItem(KEY);
-    return ACCOUNTS.find((a) => a.id === id) ?? null;
+    const hit = ACCOUNTS.find((a) => a.id === id);
+    if (hit) return hit;
+    localStorage.setItem(KEY, 'ciaran');
   } catch {
-    return null;
+    /* depolama kapalı: hesap yalnızca bu sekmede geçerli */
   }
+  return ACCOUNTS[1];
 }
 
 let current: Account | null = read();
