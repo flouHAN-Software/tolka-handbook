@@ -26,7 +26,7 @@ const SHOTS = !process.argv.includes('--no-shots');
 const AXE = !process.argv.includes('--no-axe');
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
-const ROUTES = ['ask', 'documents', 'documents/claims-manual', 'documents/eow-guide', 'documents/surveyor-panel', 'documents/authority-limits/view', 'documents/home-policy-2026/view/7', 'history', 'quality', 'more'];
+const ROUTES = ['ask', 'documents', 'documents/claims-manual', 'documents/eow-guide', 'documents/surveyor-panel', 'documents/authority-limits/view', 'documents/home-policy-2026/view/7', 'history', 'quality', 'more', 'about'];
 const SIZES = [
   { id: '1440', opts: { viewport: { width: 1440, height: 900 } } },
   { id: '1024', opts: { viewport: { width: 1024, height: 768 } } },
@@ -147,6 +147,18 @@ try {
     (docOk ? ok : fail)('menü: Documents ekranı açılıyor');
     const focused = await page.evaluate(() => document.activeElement?.id);
     (focused === 'main' ? ok : fail)('menü: ekran değişince odak içeriğe taşınıyor');
+    const copy = (await page.textContent('.side-foot .copy-long'))?.trim();
+    (copy === '© 2026 flouHAN Software. All rights reserved.' && (await page.locator('.side-foot .copy-long').isVisible()) ? ok : fail)('telif: menünün en altında "© 2026 flouHAN Software. All rights reserved."');
+    await page.click('.side-foot .about-link');
+    await page.waitForTimeout(250);
+    const about = (await page.textContent('h1')) === 'About this project'
+      && (await page.locator('.ab-skills > div').count()) >= 6
+      && (await page.locator('.ab-tools > div').count()) >= 5
+      && (await page.locator('.ab-licence', { hasText: 'All rights reserved' }).count()) === 1
+      && (await page.getAttribute('.side-foot .about-link', 'aria-current')) === 'page';
+    (about ? ok : fail)('Bu proje hakkında: menüden açılıyor; yapılanlar, diller ve araçlar, telif ve lisans bölümleri var');
+    await page.click('.side-list a[href="#/documents"]');
+    await page.waitForTimeout(250);
     await page.click('.side-prefs button[lang="tr"]');
     await page.waitForTimeout(250);
     const trOk = (await page.textContent('h1')) === 'Belgeler' && (await page.evaluate(() => document.documentElement.lang)) === 'tr' && (await page.evaluate(() => location.hash)) === '#/documents';
@@ -180,6 +192,10 @@ try {
     (tip === '1' ? ok : fail)('simge menü: üstüne gelince ipucu görünüyor');
     const name = await page.getByRole('link', { name: 'History' }).count();
     (name === 1 ? ok : fail)('simge menü: bağlantının erişilebilir adı var');
+    const railCopy = (await page.locator('.side-foot .copy-short').isVisible()) && !(await page.locator('.side-foot .copy-long').isVisible())
+      && (await page.textContent('.side-foot .copy-sr'))?.trim() === '© 2026 flouHAN Software. All rights reserved.';
+    (railCopy ? ok : fail)('simge menü: "© 2026" görünüyor, tam telif metni ekran okuyucuya açık');
+    ((await page.getByRole('link', { name: 'About this project' }).count()) === 1 ? ok : fail)('simge menü: "About this project" bağlantısı var');
     await page.click('.rail-btn:has-text("Türkçe arayüze geç")');
     await page.waitForTimeout(250);
     (await page.textContent('h1')) === "Handbook'a sorun" ? ok('simge menü: dil düğmesi Türkçeye geçiriyor') : fail('simge menü: dil düğmesi');
@@ -194,12 +210,17 @@ try {
     await page.tap('.tabs a[href="#/more"]');
     await page.waitForTimeout(250);
     (await page.textContent('h1')) === 'More' ? ok('telefon: Daha fazla açılıyor') : fail('telefon: Daha fazla');
-    const noQuality = (await page.locator('.more-row').count()) === 0 && (await page.locator('.more-block .btn', { hasText: 'Switch account' }).count()) === 1;
+    const noQuality = (await page.locator('.more-row[href="#/quality"]').count()) === 0 && (await page.locator('.more-block .btn', { hasText: 'Switch account' }).count()) === 1;
     (noQuality ? ok : fail)('telefon (claims): Daha fazla sayfasında Yanıt kalitesi yok, "Switch account" var');
+    ((await page.locator('.page > .copy', { hasText: '© 2026 flouHAN Software. All rights reserved.' }).isVisible()) ? ok : fail)('telefon: Daha fazla sayfasının sonunda telif satırı');
+    await page.tap('.more-row[href="#/about"]');
+    await page.waitForTimeout(250);
+    const ab = (await page.textContent('h1')) === 'About this project' && (await page.getAttribute('.tabs a[href="#/more"]', 'aria-current')) === 'page';
+    (ab ? ok : fail)('telefon: "About this project" açılıyor, "Daha fazla" sekmesi seçili kalıyor');
     // Bilgi yönetimi olarak Yanıt kalitesi
     await page.goto(`${BASE}/?as=knowledge#/more`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(250);
-    await page.tap('.more-row');
+    await page.tap('.more-row[href="#/quality"]');
     await page.waitForTimeout(250);
     const q = (await page.textContent('h1')) === 'Answer quality';
     const cur = await page.getAttribute('.tabs a[href="#/more"]', 'aria-current');

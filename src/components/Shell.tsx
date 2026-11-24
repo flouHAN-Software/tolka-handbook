@@ -52,6 +52,17 @@ export function PrefControls() {
   );
 }
 
+/** Telif satırı (altın kural 5): menünün en altında, telefonda "Daha fazla" ve giriş ekranının sonunda */
+export function Copyright() {
+  return (
+    <p className="copy">
+      <span className="copy-long">{t('copy')}</span>
+      <span className="copy-short" aria-hidden="true">© 2026</span>
+      <span className="sr-only copy-sr">{t('copy')}</span>
+    </p>
+  );
+}
+
 /** Hesap değiştirme isteği (main.tsx giriş ekranını açar) */
 export const switchAccount = () => window.dispatchEvent(new Event('tolka:switch'));
 export const openGuide = () => window.dispatchEvent(new Event('tolka:guide'));
@@ -105,6 +116,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <Who />
           <button type="button" className="linkish switch" onClick={switchAccount}>{t('acct.switch')}</button>
           <button type="button" className="linkish guide-link" onClick={openGuide}>{t('nav.guide')}</button>
+          <a className="about-link" href={href('about')} aria-current={current('about')}>{t('nav.about')}</a>
           <div className="side-prefs"><PrefControls /></div>
           {/* Simge menüde dil ve tema tek düğmeyle değişir */}
           <div className="rail-prefs">
@@ -118,6 +130,11 @@ export function Shell({ children }: { children: ReactNode }) {
               <span className="sr-only">{t('nav.guide')}</span>
               <span className="tip" aria-hidden="true">{t('nav.guide')}</span>
             </button>
+            <a className="rail-btn" href={href('about')} aria-current={current('about')}>
+              <Icon name="info" />
+              <span className="sr-only">{t('nav.about')}</span>
+              <span className="tip" aria-hidden="true">{t('nav.about')}</span>
+            </a>
             <button type="button" className="rail-btn" onClick={() => set({ lang: prefs.lang === 'en' ? 'tr' : 'en' })}>
               <span aria-hidden="true">{prefs.lang === 'en' ? 'TR' : 'EN'}</span>
               <span className="sr-only">{t('lang.switch')}</span>
@@ -134,6 +151,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <span className="concept-short" aria-hidden="true">{t('concept')}</span>
             <span className="sr-only concept-sr">{t('concept.by')}</span>
           </a>
+          <Copyright />
         </div>
       </nav>
 
@@ -150,7 +168,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
       <nav className="tabs" aria-label={t('nav.label')}>
         {TABS.map((n) => (
-          <a key={n.id} href={href(n.id)} aria-current={current(n.id) ?? (n.id === 'more' && route === 'quality' ? 'page' : undefined)}>
+          <a key={n.id} href={href(n.id)} aria-current={current(n.id) ?? (n.id === 'more' && (route === 'quality' || route === 'about') ? 'page' : undefined)}>
             <Icon name={n.icon} />
             <span>{t(`nav.${n.id}` as const)}</span>
           </a>

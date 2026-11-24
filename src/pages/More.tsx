@@ -1,5 +1,5 @@
 import { Icon } from '../components/Icon';
-import { PrefControls, Who, openGuide, switchAccount } from '../components/Shell';
+import { Copyright, PrefControls, Who, openGuide, switchAccount } from '../components/Shell';
 import { currentAccount } from '../lib/account';
 import { t } from '../lib/i18n';
 import { href } from '../lib/router';
@@ -11,14 +11,18 @@ export function More() {
       <header className="page-head">
         <h1>{t('more.title')}</h1>
       </header>
-      {currentAccount()?.role === 'knowledge' && (
-        <nav className="more-list" aria-label={t('more.title')}>
+      <nav className="more-list" aria-label={t('more.title')}>
+        {currentAccount()?.role === 'knowledge' && (
           <a className="more-row" href={href('quality')}>
             <Icon name="quality" />
             {t('nav.quality')}
           </a>
-        </nav>
-      )}
+        )}
+        <a className="more-row" href={href('about')}>
+          <Icon name="info" />
+          {t('nav.about')}
+        </a>
+      </nav>
       <div className="more-block">
         <Who />
         <button type="button" className="btn" onClick={switchAccount}>{t('acct.switch')}</button>
@@ -36,6 +40,7 @@ export function More() {
           <Icon name="external" size={16} />
         </a>
       </div>
+      <Copyright />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { More } from './pages/More';
 import { History } from './pages/History';
 import { Quality } from './pages/quality/Quality';
 import { Gate } from './pages/Gate';
+import { About } from './pages/About';
 import { currentRole } from './lib/account';
 
 export default function App() {
@@ -40,6 +41,9 @@ export default function App() {
       break;
     case 'more':
       page = <More />;
+      break;
+    case 'about':
+      page = <About />;
       break;
   }
 

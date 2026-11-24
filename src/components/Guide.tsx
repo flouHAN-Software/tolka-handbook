@@ -102,6 +102,8 @@ export function Guide({ onClose }: { onClose: () => void }) {
           <h3 id="g-how">{t('g.how')}</h3>
           <p>{t('g.how1')}</p>
           <p>{t('g.how2')}</p>
+          <p>{t('g.about')}</p>
+          <button type="button" className="btn" onClick={() => { if (!account) setAccount('ciaran'); go('about'); close(); }}>{t('nav.about')}</button>
         </section>
 
         <footer className="g-foot">

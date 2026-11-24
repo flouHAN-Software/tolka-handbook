@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { DOCS, canOpen } from '../data/library';
 import { ACCOUNTS, useAccount, type AccountId } from '../lib/account';
 import { t } from '../lib/i18n';
-import { PrefControls, Wordmark } from './Shell';
+import { Copyright, PrefControls, Wordmark } from './Shell';
 
 /** "Kim olarak giriş yapıyorsunuz?" Her rolün ne gördüğü açıkça yazar; parola yoktur ve bu söylenir. */
 export function SignIn({ back, onBack }: { back?: AccountId; onBack?: () => void }) {
@@ -43,6 +43,7 @@ export function SignIn({ back, onBack }: { back?: AccountId; onBack?: () => void
           <p>{t('si.note')}</p>
         </div>
         <div className="si-prefs"><PrefControls /></div>
+        <Copyright />
       </main>
     </div>
   );

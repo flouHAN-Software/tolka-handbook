@@ -1,0 +1,183 @@
+/* Bu proje hakkında: nasıl kullanılır, yapılanlar, diller ve araçlar, neler yapılabilir, telif ve lisans.
+   Belge sarısı burada kullanılmaz (yalnızca "belgeden alındı" anlamına gelir); bölümler ince çizgiyle ayrılır. */
+
+.about {
+  max-width: 920px;
+}
+.ab-kicker {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.ab-sec {
+  margin-top: 40px;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+}
+.ab-sec h2 {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+}
+.ab-sec > p,
+.ab-sec li {
+  max-width: 68ch;
+}
+.ab-sub {
+  margin-top: -8px;
+  color: var(--text-2);
+}
+
+/* Nasıl kullanılır: numaralı adımlar */
+.ab-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  counter-reset: ab;
+}
+.ab-steps li {
+  position: relative;
+  padding-left: 44px;
+  font-size: 17px;
+  line-height: 27px;
+  counter-increment: ab;
+}
+.ab-steps li::before {
+  content: counter(ab);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1.5px var(--text);
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+/* Yapılanlar ve araçlar: solda ad, sağda ne olduğu */
+.ab-skills,
+.ab-tools {
+  width: 100%;
+  margin: 0;
+  border-top: 1px solid var(--line-2);
+}
+.ab-skills > div,
+.ab-tools > div {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  gap: 24px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.ab-skills dt,
+.ab-tools dt {
+  font-weight: 600;
+}
+.ab-skills dd,
+.ab-tools dd {
+  margin: 0;
+  max-width: 64ch;
+}
+.ab-tools > div {
+  padding: 12px 0;
+}
+.ab-tools dd {
+  font-weight: 500;
+}
+
+/* Neler yapılabilir */
+.ab-uses {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+.ab-uses li {
+  position: relative;
+  padding-left: 24px;
+  font-size: 17px;
+  line-height: 27px;
+}
+.ab-uses li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 11px;
+  width: 7px;
+  height: 7px;
+  background: var(--text);
+}
+
+.ab-sec .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* Telif ve lisans */
+.ab-licence {
+  padding: 24px 28px;
+  border-top: 0;
+  border-left: 3px solid var(--text);
+  background: var(--sunk);
+  gap: 10px;
+}
+.ab-copy {
+  font-weight: 650;
+}
+.ab-links {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+}
+.ab-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 767px) {
+  .ab-sec {
+    margin-top: 32px;
+    padding-top: 24px;
+  }
+  .ab-skills > div,
+  .ab-tools > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .ab-licence {
+    padding: 20px 16px;
+  }
+}
+
+@media (forced-colors: active) {
+  .ab-steps li::before {
+    border: 1.5px solid CanvasText;
+  }
+  .ab-uses li::before {
+    background: CanvasText;
+  }
+  .ab-licence {
+    border: 1px solid CanvasText;
+  }
+}

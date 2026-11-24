@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 import type { Key } from './strings';
 
 // Adres çubuğunda #/documents gibi bir yol tutulur; statik sunucuda yenilemede kaybolmaz.
-export const ROUTES = ['ask', 'documents', 'history', 'quality', 'more'] as const;
+export const ROUTES = ['ask', 'documents', 'history', 'quality', 'more', 'about'] as const;
 export type RouteId = (typeof ROUTES)[number];
 
 export const ROUTE_TITLE: Record<RouteId, Key> = {
@@ -10,7 +10,8 @@ export const ROUTE_TITLE: Record<RouteId, Key> = {
   documents: 'nav.documents',
   history: 'nav.history',
   quality: 'nav.quality',
-  more: 'nav.more'
+  more: 'nav.more',
+  about: 'nav.about'
 };
 
 const DEFAULT: RouteId = 'ask';

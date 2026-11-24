@@ -545,6 +545,125 @@ export const STR = {
   'd.failed.text': [
     'It looks like a scan. Upload a copy with a text layer, or ask {owner} for the original file. Until then, the assistant can’t answer from it.',
     'Taranmış bir kopya gibi görünüyor. Metin katmanı olan bir kopya yükleyin ya da asıl dosyayı belgenin sorumlusundan ({owner}) isteyin. O zamana kadar asistan bu belgeden yanıt veremez.'
+  ],
+
+  // Bu proje hakkında (altın kural 5) ve telif satırı
+  'nav.about': ['About this project', 'Bu proje hakkında'],
+  'copy': ['© 2026 flouHAN Software. All rights reserved.', '© 2026 flouHAN Software. Tüm hakları saklıdır.'],
+  'ab.lead': [
+    'Tolka Handbook is a concept project by flouHAN Software: a document assistant for an insurer that works end to end. This page covers how to use it, what was built and with which tools, and where the same structure can be put to work.',
+    'Tolka Handbook, flouHAN Software’in konsept çalışmasıdır: bir sigorta şirketi için hazırlanmış, uçtan uca çalışan bir doküman asistanı. Bu sayfada uygulamanın nasıl kullanıldığı, hangi işlerin hangi araçlarla yapıldığı ve aynı yapının başka nerelerde kullanılabileceği anlatılıyor.'
+  ],
+  'ab.use': ['How to use it', 'Nasıl kullanılır'],
+  'ab.use1': [
+    'Choose who you are on the sign-in screen. Each of the four roles opens different documents, and you can switch at any time from the menu.',
+    'Giriş ekranında kim olduğunuzu seçin. Dört rolün her biri farklı belgeleri açar; menüden istediğiniz zaman hesap değiştirebilirsiniz.'
+  ],
+  'ab.use2': ['Ask in your own words, or start from a suggestion on the Ask screen.', 'Sorunuzu kendi cümlelerinizle yazın ya da Sor ekranındaki önerilerden biriyle başlayın.'],
+  'ab.use3': [
+    'Select a yellow number in the answer. The document opens at that clause, with the passage marked.',
+    'Yanıttaki sarı numaralardan birine tıklayın. Belge o maddede açılır, ilgili bölüm işaretlidir.'
+  ],
+  'ab.use4': [
+    'Add a date of loss and ask about the excess again: the answer moves to the policy wording in force on that date.',
+    'Hasar tarihi ekleyip muafiyeti yeniden sorun: yanıt, o tarihte yürürlükte olan poliçe şartlarına göre değişir.'
+  ],
+  'ab.use5': [
+    'Open Documents to see each document’s owner and review date, compare two versions, or add a PDF of your own.',
+    'Belgeler ekranında her belgenin sorumlusunu ve gözden geçirme tarihini görün, iki sürümü karşılaştırın ya da kendi PDF dosyanızı ekleyin.'
+  ],
+  'ab.use6': [
+    'Sign in as Declan, the knowledge manager, to see the questions the documents couldn’t answer.',
+    'Bilgi yönetimi sorumlusu Declan olarak girip belgelerin yanıtlayamadığı soruları görün.'
+  ],
+  'ab.guide': ['Open the guide', 'Rehberi açın'],
+  'ab.built': ['What was built', 'Bu projede yapılanlar'],
+  'ab.built.lead': ['Each item is a part of the app you can try for yourself.', 'Her madde, uygulamada kendiniz deneyebileceğiniz bir parçadır.'],
+  'ab.sk.ai': ['AI integration', 'Yapay zeka entegrasyonu'],
+  'ab.sk.ai.d': [
+    'Answers are written by Gemma 4 on Cloudflare Workers AI, using only the passages the search found. Every quote is checked word for word against the document. Four models were tried on the same six questions before Gemma 4 was chosen.',
+    'Yanıtları Cloudflare Workers AI üzerindeki Gemma 4 yazar ve yalnızca aramanın bulduğu bölümleri kullanır. Her alıntı belgeyle kelimesi kelimesine karşılaştırılır. Gemma 4, dört model aynı altı soruyla denendikten sonra seçildi.'
+  ],
+  'ab.sk.api': ['API development', 'API geliştirme'],
+  'ab.sk.api.d': [
+    'The app talks to its own endpoint, POST /api/handbook/answer, running on Cloudflare Workers. It checks where each request comes from, limits questions per person, keeps a daily usage budget and caches the day’s answers in a SQLite-backed Durable Object.',
+    'Uygulama, Cloudflare Workers üzerinde çalışan kendi ucuyla konuşur: POST /api/handbook/answer. Bu uç isteğin nereden geldiğini denetler, kişi başına soru sayısını sınırlar, günlük kullanım bütçesini tutar ve günün yanıtlarını SQLite tabanlı bir Durable Object’te önbelleğe alır.'
+  ],
+  'ab.sk.search': ['Search', 'Arama'],
+  'ab.sk.search.d': [
+    'BM25 ranking in the browser, with word stemming, a Turkish-to-English glossary and extra weight for the asker’s role. When the model can’t be reached, the app falls back to this search and says so on screen.',
+    'Tarayıcıda BM25 sıralaması; kök bulma, Türkçe–İngilizce sözlük ve soranın rolüne göre ek ağırlık. Modele ulaşılamazsa uygulama bu aramaya geçer ve bunu ekranda yazar.'
+  ],
+  'ab.sk.docs': ['Document processing', 'Belge işleme'],
+  'ab.sk.docs.d': [
+    'PDFs are read in the browser with pdf.js, and headings and numbered clauses are picked out. Scanned, password-protected and empty files are told apart. Two versions of a document are compared word by word.',
+    'PDF dosyaları tarayıcıda pdf.js ile okunur; başlıklar ve numaralı maddeler ayrıştırılır. Taranmış, parolalı ve boş dosyalar birbirinden ayırt edilir. Bir belgenin iki sürümü kelime kelime karşılaştırılır.'
+  ],
+  'ab.sk.access': ['Role-based access', 'Rol bazlı yetkilendirme'],
+  'ab.sk.access.d': [
+    'Four roles, each with its own documents. Every answer shows the classification of its most restricted source, and a document the role can’t open is never named.',
+    'Dört rol var ve her birinin kendi belgeleri. Her yanıtta dayandığı en kısıtlı belgenin gizlilik düzeyi yazar; rolün açamadığı belgenin adı hiç geçmez.'
+  ],
+  'ab.sk.auto': ['Test and recording automation', 'Test ve kayıt otomasyonu'],
+  'ab.sk.auto.d': [
+    'Playwright opens every screen at three widths, in two languages and two themes, checks accessibility with axe-core and goes through each flow: more than 200 checks a run. The screenshots and captioned videos on the case study are recorded from the demo by script in the same way.',
+    'Playwright her ekranı üç genişlikte, iki dilde ve iki temada açar, erişilebilirliği axe-core ile denetler ve her akışı baştan sona dener: her çalıştırmada 200’den fazla kontrol. Vaka sayfasındaki ekran görüntüleri ve altyazılı videolar da demodan aynı yolla, betikle kaydedilir.'
+  ],
+  'ab.sk.a11y': ['Accessibility', 'Erişilebilirlik'],
+  'ab.sk.a11y.d': [
+    'Built to WCAG 2.1 AA: full keyboard use, screen reader announcements, high-contrast mode, reduced motion and a typeface drawn for readers with low vision.',
+    'WCAG 2.1 AA’ya göre yapıldı: klavyeyle tam kullanım, ekran okuyucu duyuruları, yüksek karşıtlık modu, hareketi azaltma tercihi ve az gören okurlar için çizilmiş bir yazı tipi.'
+  ],
+  'ab.sk.lang': ['Two languages', 'İki dil'],
+  'ab.sk.lang.d': [
+    'The English and Turkish interfaces are written separately, not translated. Questions can be asked in Turkish about English documents.',
+    'İngilizce ve Türkçe arayüz birbirinden çevrilmedi, ayrı ayrı yazıldı. İngilizce belgeler hakkında Türkçe soru sorulabilir.'
+  ],
+  'ab.tools': ['Languages and tools', 'Kullanılan diller ve araçlar'],
+  'ab.tl.lang': ['Languages', 'Diller'],
+  'ab.tl.ui': ['Interface', 'Arayüz'],
+  'ab.tl.server': ['Server', 'Sunucu'],
+  'ab.tl.ai': ['Language model', 'Dil modeli'],
+  'ab.tl.docs': ['PDF reading', 'PDF okuma'],
+  'ab.tl.test': ['Testing and recording', 'Test ve kayıt'],
+  'ab.tl.type': ['Typefaces', 'Yazı tipleri'],
+  'ab.uses': ['What it could become', 'Bu yapıyla neler yapılabilir'],
+  'ab.uses1': [
+    'Connected to where your documents already live (SharePoint, Google Drive, Confluence or a file server) through their APIs, with company sign-in.',
+    'Belgelerinizin zaten durduğu yere bağlanabilir: SharePoint, Google Drive, Confluence ya da bir dosya sunucusu; API’leri üzerinden ve şirket hesabıyla girişle.'
+  ],
+  'ab.uses2': [
+    'Draft replies to customer emails or support tickets with the sources attached, for a person to check before they go out.',
+    'Müşteri e-postalarına ya da destek taleplerine kaynakları ekli yanıt taslakları hazırlayabilir; gönderilmeden önce bir kişi kontrol eder.'
+  ],
+  'ab.uses3': [
+    'Search contracts, procedures or technical manuals across thousands of files, in more than one language.',
+    'Binlerce dosya içinde sözleşme, prosedür ya da teknik el kitabı arayabilir, birden çok dilde.'
+  ],
+  'ab.uses4': [
+    'Run the model on your own servers when documents must not leave the company.',
+    'Belgelerin şirket dışına çıkmaması gerekiyorsa model kendi sunucularınızda çalışabilir.'
+  ],
+  'ab.uses5': [
+    'Report what people ask and what the documents miss, so each owner knows what to update.',
+    'Çalışanların ne sorduğunu ve belgelerin neyi karşılamadığını raporlayabilir; her sorumlu neyi güncellemesi gerektiğini bilir.'
+  ],
+  'ab.uses6': [
+    'Work for one person, too: an assistant over your own notes, papers or course material.',
+    'Tek bir kişi için de çalışabilir: kendi notlarınız, makaleleriniz ya da ders materyaliniz üzerinde bir asistan.'
+  ],
+  'ab.quote': ['Get a quote for a similar project', 'Benzer bir proje için teklif alın'],
+  'ab.quote.url': ['https://flouhan.com/en/#contact', 'https://flouhan.com/tr/#contact'],
+  'ab.licence': ['Copyright and licence', 'Telif ve lisans'],
+  'ab.licence1': [
+    'The design and source code of this app belong to flouHAN Software. The source is published on GitHub so it can be read and reviewed; it may not be copied, changed or used without written permission.',
+    'Bu uygulamanın tasarımı ve kaynak kodu flouHAN Software’e aittir. Kaynak kod, incelenebilmesi için GitHub’da yayımlanmıştır; yazılı izin alınmadan kopyalanamaz, değiştirilemez ve kullanılamaz.'
+  ],
+  'ab.source': ['Source code on GitHub', 'GitHub’daki kaynak kod'],
+  'ab.case': ['Case study', 'Vaka çalışması'],
+  'g.about': [
+    'The languages, tools and techniques behind the app, and what the same structure could be used for, are on the About this project screen.',
+    'Uygulamada kullanılan diller, araçlar ve teknikler ile aynı yapının başka nelerde kullanılabileceği “Bu proje hakkında” ekranında anlatılıyor.'
   ]
 } as const satisfies Record<string, readonly [string, string]>;
 

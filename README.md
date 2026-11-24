@@ -17,7 +17,7 @@ A concept web app by [flouHAN Software](https://flouhan.com): the internal docum
 
 There are four demo accounts with no password: a customer care agent, a claims handler, a fraud investigator and a knowledge manager. Each role opens different documents, search only runs over those, and a document a role can't open is never named in its answers.
 
-The interface is in English and Turkish, with a light and a dark theme. Questions can be asked in Turkish: the answer comes back in Turkish and the quotes stay in the documents' English. A short guide opens on the first visit.
+The interface is in English and Turkish, with a light and a dark theme. Questions can be asked in Turkish: the answer comes back in Turkish and the quotes stay in the documents' English. A short guide opens on the first visit, and the **About this project** screen lists how to use the app, the work behind it, and the languages and tools it was built with.
 
 ![A question asked in Turkish with a date of loss in February 2026, answered from the 2024.2 wording](docs/date-of-loss.webp)
 
@@ -80,4 +80,4 @@ Comments in the source are written in Turkish.
 
 ## Licence
 
-© 2026 flouHAN Software. The code is published to be read and reviewed. It is not licensed for reuse.
+© 2026 flouHAN Software. All rights reserved. The code is published to be read and reviewed; it may not be copied, changed or used without written permission. See [LICENSE](LICENSE).

@@ -412,3 +412,63 @@ main:focus {
     display: none;
   }
 }
+
+/* Bu proje hakkında bağlantısı (menünün altında) */
+.side-foot .about-link {
+  justify-self: start;
+  margin-top: -10px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text);
+  text-underline-offset: 3px;
+}
+.side-foot .about-link[aria-current='page'] {
+  font-weight: 650;
+}
+a.rail-btn {
+  text-decoration: none;
+}
+a.rail-btn[aria-current='page'] {
+  background: var(--surface);
+  color: var(--text);
+}
+@media (min-width: 768px) and (max-width: 1279px) {
+  .side-foot .about-link {
+    display: none;
+  }
+}
+
+/* Telif satırı: menünün en altında; simge menüde yalnızca "© 2026" görünür, tam metin ekran okuyucuya */
+.copy {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-3);
+}
+.copy-short,
+.copy-sr {
+  display: none;
+}
+.side-foot .copy {
+  margin-top: -8px;
+}
+@media (min-width: 768px) and (max-width: 1279px) {
+  .side-foot .copy {
+    margin-top: 0;
+    text-align: center;
+  }
+  .side-foot .copy-long {
+    display: none;
+  }
+  .side-foot .copy-short {
+    display: inline;
+  }
+  .side-foot .copy-sr {
+    display: block;
+  }
+}
+.more-note + .copy,
+.si-prefs + .copy {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}

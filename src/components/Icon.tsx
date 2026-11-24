@@ -28,6 +28,12 @@ const PATHS = {
     </>
   ),
   moon: <path d="M15.5 12.2A6 6 0 0 1 7.8 4.5a6 6 0 1 0 7.7 7.7z" strokeLinejoin="round" />,
+  info: (
+    <>
+      <circle cx="10" cy="10" r="6.5" />
+      <path d="M10 9v4.5M10 6.6v.1" strokeLinecap="round" />
+    </>
+  ),
   external: <path d="M8 4.5H4.5v11h11V12M11 4.5h4.5V9M15.5 4.5L9 11" strokeLinecap="round" strokeLinejoin="round" />
 } as const;
 

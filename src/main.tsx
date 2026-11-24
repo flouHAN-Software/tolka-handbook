@@ -16,6 +16,7 @@ import './styles/viewer.css';
 import './styles/signin.css';
 import './styles/quality.css';
 import './styles/guide.css';
+import './styles/about.css';
 import App from './App';
 import { PrefsProvider, usePrefs } from './lib/i18n';
 import { AccountProvider, useAccount, type AccountId } from './lib/account';
