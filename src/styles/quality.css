@@ -1,0 +1,122 @@
+/* Yanıt kalitesi: konu listesi + sağda konunun ayrıntısı (Belgeler ekranının düzeni) */
+
+.iq-sum {
+  margin-top: 16px;
+  max-width: 68ch;
+  font-size: 18px;
+  line-height: 28px;
+}
+.iq-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line-2);
+  max-width: 900px;
+}
+.iq-row {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: inherit;
+}
+.iq-row:hover {
+  background: var(--hover);
+}
+.iq-row.sel {
+  background: var(--sunk);
+  box-shadow: inset 3px 0 0 var(--text);
+}
+.iq-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.iq-n {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.iq-title {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+}
+.iq-meta {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-3);
+}
+.iq-seed {
+  margin-top: 16px;
+  max-width: 68ch;
+}
+
+.gap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.gap svg {
+  flex: none;
+}
+.gap-conflict,
+.gap-outdated {
+  color: var(--warn);
+}
+.gap-unread {
+  color: var(--err);
+}
+
+.iq-detail h2 {
+  margin-top: 6px;
+}
+.iq-status {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.iq-docs,
+.iq-asked {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+.iq-docs li + li {
+  margin-top: 4px;
+}
+.iq-docs a {
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+.iq-asked li {
+  display: grid;
+  gap: 2px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.iq-asked q {
+  font-size: 16px;
+  line-height: 24px;
+}
+.iq-note {
+  height: auto;
+  min-height: 88px;
+  padding: 10px 12px;
+  line-height: 24px;
+  resize: vertical;
+}
+.iq-detail .confirm-acts {
+  flex-wrap: wrap;
+  margin-top: 4px;
+}

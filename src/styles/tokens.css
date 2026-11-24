@@ -1,0 +1,73 @@
+/* Tolka Handbook kimliği (KIMLIK.md, 24.11.2026 onaylı).
+   Arayüz mürekkep ve kâğıt tonlarında; tek güçlü renk fosforlu kalem sarısı ve yalnızca "belgeden alındı" demek.
+   Sabit renk yazılmaz, bu değişkenler kullanılır. */
+
+:root {
+  --canvas: #ECEEEA;
+  --surface: #FFFFFF;
+  --page: #FFFFFF;
+  --sunk: #F5F6F3;
+  --text: #15171A;
+  --text-2: #42464C;
+  --text-3: #5B6067;
+  --text-4: #8A8F95;
+  --line: #E0E2DD;
+  --line-2: #C8CBC5;
+  --mark: #FFE14A;
+  --mark-ink: #15171A;
+  --mark-soft: #FFF4C2;
+  --primary: #15171A;
+  --on-primary: #FFFFFF;
+  --hover: rgba(21, 23, 26, 0.05);
+  --focus: #0B57D0;
+  --ok: #1C6B3E;
+  --warn: #8E4700;
+  --err: #B3261E;
+  --tolka: #0E4B54;
+  --lbl-conf: #E3E5E0;
+  --lbl-strict: #15171A;
+  --on-strict: #FFFFFF;
+  --scrim: rgba(21, 23, 26, 0.4);
+  --shadow-page: 0 1px 2px rgba(21, 23, 26, 0.06), 0 12px 32px -18px rgba(21, 23, 26, 0.28);
+  --shadow-pop: 0 2px 4px rgba(21, 23, 26, 0.06), 0 16px 40px -12px rgba(21, 23, 26, 0.3);
+
+  --font-ui: 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif;
+  --font-doc: 'Source Serif 4 Variable', Georgia, serif;
+
+  --nav: 232px;
+  --rail: 64px;
+  --bar: 56px;
+  --tabs: 64px;
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --canvas: #0E0F11;
+  --surface: #16171A;
+  --page: #1B1C1F;
+  --sunk: #1E2023;
+  --text: #ECEBE6;
+  --text-2: #BDBCB5;
+  --text-3: #9C9B95;
+  --text-4: #6E6D68;
+  --line: #2A2C30;
+  --line-2: #3D4045;
+  --mark: #F5D63F;
+  --mark-ink: #15171A;
+  --mark-soft: #3B3720;
+  --primary: #ECEBE6;
+  --on-primary: #15171A;
+  --hover: rgba(236, 235, 230, 0.06);
+  --focus: #A8C7FA;
+  --ok: #7BD3A0;
+  --warn: #F2A65E;
+  --err: #F4877E;
+  --tolka: #8CCAD2;
+  --lbl-conf: #2D2F33;
+  --lbl-strict: #ECEBE6;
+  --on-strict: #15171A;
+  --scrim: rgba(0, 0, 0, 0.6);
+  --shadow-page: 0 0 0 1px #2A2C30, 0 16px 36px -20px rgba(0, 0, 0, 0.7);
+  --shadow-pop: 0 0 0 1px #3D4045, 0 18px 40px -12px rgba(0, 0, 0, 0.75);
+  color-scheme: dark;
+}

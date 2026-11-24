@@ -1,0 +1,35 @@
+{
+  "name": "tolka-handbook",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "check": "node scripts/check.mjs",
+    "shots": "node scripts/shots.mjs",
+    "video": "node scripts/video.mjs",
+    "video-phone": "node scripts/video-phone.mjs",
+    "samples": "node scripts/make-samples.mjs",
+    "server": "npm run build && npx wrangler@4.168.0 dev --port 8787",
+    "deploy": "npm run build && npx wrangler@4.168.0 deploy"
+  },
+  "dependencies": {
+    "@fontsource-variable/atkinson-hyperlegible-next": "^5.3.0",
+    "@fontsource-variable/source-serif-4": "^5.3.1",
+    "pdfjs-dist": "^6.5.438",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "ffmpeg-static": "^5.3.0",
+    "playwright": "^1.65.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8"
+  }
+}

@@ -1,0 +1,899 @@
+/* Sor: solda soru ve yanıt, sağda yanıtın dayandığı belge (NotebookLM'den).
+   Ortada tek sohbet kutusu yok; asistanın sözü düz yazı, belgenin sözü serif. */
+
+.ask {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 600px;
+  height: 100vh;
+  height: 100dvh;
+}
+.convo {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+  background: var(--surface);
+}
+.convo-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 32px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.convo-title {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+  min-width: 0;
+}
+.thread {
+  overflow-y: auto;
+  padding: 24px 32px 32px;
+  scroll-padding-top: 16px;
+}
+
+/* Başlangıç: boş ekran değil, ne sorulabileceğini gösterir */
+.start {
+  max-width: 68ch;
+}
+.start-lead {
+  font-size: 18px;
+  line-height: 28px;
+  color: var(--text-2);
+}
+.start-h {
+  margin-top: 28px;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+}
+.start-group {
+  margin-top: 14px;
+}
+.start-group h3 {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--text-3);
+  margin-bottom: 4px;
+}
+.start-group ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+.suggest {
+  display: block;
+  width: 100%;
+  padding: 10px 28px 10px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  text-align: left;
+  font-size: 16px;
+  line-height: 24px;
+  position: relative;
+}
+.suggest::after {
+  content: '→';
+  position: absolute;
+  right: 4px;
+  top: 10px;
+  color: var(--text-3);
+}
+.suggest:hover {
+  background: var(--hover);
+}
+.start-up {
+  margin-top: 24px;
+  color: var(--text-2);
+}
+.start-up a {
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+/* Soru ve yanıt */
+.qa + .qa {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid var(--line);
+}
+.q {
+  background: var(--sunk);
+  border-radius: 2px;
+  padding: 12px 16px;
+  max-width: 68ch;
+}
+.q .by {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-3);
+}
+.q p {
+  margin-top: 2px;
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 500;
+}
+.ans {
+  margin-top: 20px;
+  max-width: 68ch;
+}
+.byline {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-2);
+}
+.byline .row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.byline .row > svg {
+  flex: none;
+  margin-top: 2px;
+}
+.byline .lbl {
+  margin-top: -2px;
+  flex: none;
+}
+.byline .note {
+  padding-left: 26px;
+}
+
+.quotes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.qcard {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 0 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.cite {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-top: 2px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--mark);
+  color: var(--mark-ink);
+  font: 700 14px/1 var(--font-ui);
+}
+.cite[aria-pressed='true'] {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text);
+}
+.qmeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-3);
+}
+.qdoc {
+  color: var(--text);
+  font-weight: 600;
+}
+.qbody .st {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 20px;
+}
+.qbody .st svg {
+  margin-top: 2px;
+}
+.quote {
+  margin: 8px 0 0;
+  padding-left: 16px;
+  border-left: 3px solid var(--mark);
+  font-family: var(--font-doc);
+  font-size: 18px;
+  line-height: 29px;
+}
+.quote::before { content: '“'; }
+.quote::after { content: '”'; }
+.quote .m {
+  text-decoration: underline;
+  text-decoration-color: var(--mark);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 3px;
+}
+.def {
+  font-weight: 640;
+}
+.qbody .show {
+  margin-top: 6px;
+}
+.qbody .show[aria-pressed='true'] {
+  text-decoration: none;
+  color: var(--text-3);
+}
+.acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.none {
+  margin-top: 20px;
+  max-width: 68ch;
+  padding: 18px 20px;
+  border-left: 4px solid var(--text);
+  background: var(--sunk);
+}
+.none h2 {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+}
+.none p {
+  color: var(--text-2);
+  margin: 4px 0 14px;
+}
+.sent {
+  color: var(--ok);
+  font-weight: 600;
+  align-self: center;
+}
+
+/* Soru kutusu */
+.composer {
+  padding: 14px 32px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.composer-l {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.composer-box {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.composer textarea {
+  flex: 1;
+  min-height: 60px;
+  max-height: 180px;
+  resize: vertical;
+  padding: 10px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  background: var(--sunk);
+  font: 400 18px/26px var(--font-ui);
+}
+.composer textarea[aria-invalid='true'] {
+  border: 2px solid var(--err);
+}
+.composer textarea::placeholder {
+  color: var(--text-3);
+}
+.composer .btn.primary {
+  min-width: 88px;
+  font-size: 18px;
+}
+.composer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  margin-top: 8px;
+}
+.loss {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+.loss label {
+  font-weight: 600;
+}
+.loss .input {
+  width: auto;
+  height: 40px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 2px;
+  background: var(--sunk);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+  font-size: 14px;
+  font-weight: 600;
+}
+.composer > .small {
+  margin-top: 6px;
+}
+
+/* Kaynak paneli */
+.src {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  border-left: 1px solid var(--line);
+  background: var(--canvas);
+}
+.src-head {
+  position: relative;
+  padding: 14px 56px 12px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.src-head .x {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--text-2);
+}
+.src-head .x:hover {
+  background: var(--hover);
+}
+.src-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+.src-title h2 {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+}
+.src-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-2);
+}
+.src-facts .st {
+  font-size: 14px;
+  line-height: 20px;
+}
+.src-facts .st svg {
+  margin-top: 2px;
+}
+.doc-scroll {
+  overflow-y: auto;
+  padding: 24px 28px 48px;
+}
+.src-empty {
+  align-self: start;
+  margin: 32px 28px;
+  padding: 20px 22px;
+  border: 1px dashed var(--line-2);
+  border-radius: 4px;
+  max-width: 46ch;
+}
+.src-empty h2 {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+}
+.src-empty p {
+  color: var(--text-2);
+}
+
+/* Belge sayfası (kimlik: masadaki kâğıt, kurumun anteti, serif) */
+.pg {
+  background: var(--page);
+  box-shadow: var(--shadow-page);
+  padding: 36px 44px 40px;
+  font-family: var(--font-doc);
+  color: var(--text);
+}
+.lh {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding-bottom: 14px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--line-2);
+  font: 400 14px/20px var(--font-ui);
+  color: var(--text-3);
+}
+.lh-t {
+  font-family: var(--font-doc);
+  font-weight: 640;
+  font-size: 20px;
+  color: var(--tolka);
+}
+.pg-sec + .pg-sec {
+  margin-top: 26px;
+}
+.pg h3 {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  font-size: 21px;
+  line-height: 28px;
+  font-weight: 620;
+  margin-bottom: 12px;
+}
+.pg h4 {
+  font-size: 17px;
+  line-height: 26px;
+  font-weight: 620;
+}
+.cl {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  font-size: 17px;
+  line-height: 28px;
+  margin-bottom: 12px;
+}
+.cl > .n,
+.pg h3 .n {
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.cl-body p + p,
+.cl-body p + ol,
+.cl-body ol + p {
+  margin-top: 8px;
+}
+.items {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.items li {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  position: relative;
+}
+.items li .n {
+  color: var(--text-2);
+}
+.tbl {
+  overflow-x: auto;
+  margin-top: 6px;
+}
+.tbl table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 22px;
+}
+.tbl th,
+.tbl td {
+  text-align: left;
+  vertical-align: top;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.tbl thead th {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-3);
+  border-bottom-color: var(--line-2);
+}
+.tbl tbody th {
+  font-weight: 600;
+}
+.pg-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 28px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font: 400 14px/20px var(--font-ui);
+  color: var(--text-3);
+}
+
+/* İmza: fosforlu kalem çizgisi + kenarda kaynak numarası */
+mark.hl {
+  color: var(--mark-ink);
+  background: linear-gradient(var(--mark), var(--mark)) no-repeat 0 0 / 0% 100%;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  padding: 1px 2px;
+  margin: 0 -2px;
+  border-radius: 1px;
+  animation: sweep 0.5s cubic-bezier(0.3, 0.7, 0.2, 1) 0.15s forwards;
+}
+tr.hit th,
+tr.hit td {
+  background: var(--mark-soft);
+}
+tr.hit mark.hl {
+  background-size: 100% 100%;
+  animation: none;
+}
+@keyframes sweep {
+  to { background-size: 100% 100%; }
+}
+.hit {
+  position: relative;
+}
+.hit::before {
+  content: attr(data-n);
+  position: absolute;
+  left: -82px;
+  top: 3px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  background: var(--mark);
+  color: var(--mark-ink);
+  font: 700 14px/1 var(--font-ui);
+  border-radius: 2px;
+}
+.items li.hit::before {
+  left: -82px;
+}
+tr.hit::before {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  mark.hl {
+    animation: none;
+    background-size: 100% 100%;
+  }
+}
+@media (forced-colors: active) {
+  mark.hl {
+    background: Mark;
+    color: MarkText;
+  }
+  .cite {
+    border: 1px solid CanvasText;
+  }
+}
+
+/* Simge menü genişliği: belge 520 */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .ask {
+    grid-template-columns: minmax(0, 1fr) 520px;
+  }
+  .thread,
+  .convo-head,
+  .composer {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .pg {
+    padding: 28px 28px 32px 56px;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .ask {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .src {
+    display: none;
+  }
+  .ask.has-src .src {
+    display: grid;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    width: min(520px, calc(100vw - var(--rail)));
+    box-shadow: var(--shadow-pop);
+  }
+}
+
+/* Telefon: belge tam ekran açılır */
+@media (max-width: 767px) {
+  .ask {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+  .convo {
+    display: block;
+  }
+  .convo-head {
+    padding: 16px;
+  }
+  .thread {
+    padding: 16px 16px 24px;
+    overflow: visible;
+  }
+  .composer {
+    position: sticky;
+    bottom: calc(var(--tabs) + env(safe-area-inset-bottom));
+    padding: 12px 16px;
+  }
+  .composer textarea {
+    min-height: 48px;
+    font-size: 17px;
+  }
+  .composer .btn.primary {
+    min-width: 64px;
+  }
+  .composer > .small,
+  .composer-l {
+    font-size: 14px;
+  }
+  .q p,
+  .quote {
+    font-size: 17px;
+    line-height: 27px;
+  }
+  .src {
+    display: none;
+  }
+  .src.open {
+    display: grid;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    border: 0;
+  }
+  .src-head {
+    padding: 8px 16px 12px;
+  }
+  .src-head .back {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    border: 0;
+    background: none;
+    padding: 0;
+    font-weight: 600;
+  }
+  .doc-scroll {
+    padding: 16px 12px 32px;
+  }
+  .pg {
+    padding: 20px 16px 24px 44px;
+  }
+  .pg h3,
+  .cl {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+  .hit::before {
+    left: -70px;
+  }
+  .items li.hit::before {
+    left: -70px;
+  }
+}
+
+/* Uzun düğme yazısı (ör. bilgi yönetimine gönderme) dar ekranda alt satıra geçer, sayfayı taşırmaz */
+.acts .btn {
+  white-space: normal;
+  text-align: left;
+  line-height: 20px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* Model modu */
+.mode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 10px;
+}
+.mode-k {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.pending {
+  margin-top: 20px;
+  max-width: 68ch;
+  padding: 14px 16px;
+  border-left: 3px solid var(--line-2);
+  background: var(--sunk);
+  color: var(--text-2);
+}
+.pending-bar {
+  display: block;
+  height: 3px;
+  margin-bottom: 10px;
+  background: var(--line);
+  overflow: hidden;
+}
+.pending-bar i {
+  display: block;
+  width: 30%;
+  height: 100%;
+  background: var(--text-2);
+  animation: slide 1.4s ease-in-out infinite;
+}
+@keyframes slide {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(340%); }
+}
+.byline .ok > svg {
+  color: var(--ok);
+}
+.ai-text {
+  margin-top: 16px;
+  font-size: 18px;
+  line-height: 30px;
+}
+.ai-text p + p {
+  margin-top: 12px;
+}
+.cite.in {
+  width: auto;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  margin: 0 2px 0 3px;
+  vertical-align: 2px;
+}
+.cite.sm {
+  width: 22px;
+  height: 22px;
+  margin: 0 8px 0 0;
+  vertical-align: -5px;
+}
+.aiq {
+  margin: 16px 0 0;
+}
+.aiq figcaption {
+  margin-top: 6px;
+  padding-left: 19px;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--text-3);
+}
+.srcs-h {
+  margin-top: 22px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+.srcs {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+.src-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  width: 100%;
+  padding: 10px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  text-align: left;
+}
+.src-row:hover {
+  background: var(--hover);
+}
+.src-row.on {
+  background: var(--sunk);
+}
+.src-row .cite {
+  margin-top: 0;
+}
+.src-row-t {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--text-3);
+}
+.src-row-t .st {
+  font-size: 14px;
+  line-height: 22px;
+}
+.src-row-t .st svg {
+  margin-top: 3px;
+}
+.ai-none {
+  color: var(--text);
+  margin-top: 6px;
+}
+.none-by {
+  margin-top: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pending-bar i { animation: none; width: 100%; opacity: 0.4; }
+}
+
+/* Notlar yanıtın altında, küçük ve sakin */
+.notes {
+  margin: 16px 0 0;
+  padding: 10px 0 0 18px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-2);
+  display: grid;
+  gap: 4px;
+}
+.composer-row .mode {
+  margin-top: 0;
+  margin-right: 8px;
+}
+
+.src-open {
+  display: inline-block;
+  margin-top: 2px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+/* Telefonda soru kutusu küçük kalır: yazı alanı ve "Sor"; yanıt modu ve hasar tarihi "Seçenekler" altında */
+.opts-toggle {
+  display: none;
+}
+@media (max-width: 767px) {
+  .composer-l {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .composer #ask-hint {
+    display: none;
+  }
+  .opts-toggle {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    margin-top: 4px;
+  }
+  .composer:not([data-opts='1']) .composer-row {
+    display: none;
+  }
+  .composer textarea {
+    min-height: 44px;
+    max-height: 120px;
+  }
+  .convo-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 17px;
+    line-height: 24px;
+  }
+  .convo-head .btn {
+    flex: none;
+  }
+}
+
+/* Kaynak numarası, önceki kelime ve ardından gelen nokta aynı satırda kalır */
+.cite-glue {
+  white-space: nowrap;
+}

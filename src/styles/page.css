@@ -1,0 +1,152 @@
+/* Ekranların ortak başlığı ve yapım aşamasındaki ekranlar */
+
+.page {
+  max-width: 960px;
+  padding: 40px 48px 64px;
+}
+.page-head {
+  display: grid;
+  gap: 8px;
+  max-width: 68ch;
+}
+.page-head h1 {
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.page-head p {
+  color: var(--text-2);
+  font-size: 18px;
+  line-height: 28px;
+}
+
+.building {
+  margin-top: 32px;
+  padding: 20px 24px;
+  border-left: 3px solid var(--line-2);
+  background: var(--sunk);
+  max-width: 68ch;
+}
+.building b {
+  display: block;
+  font-weight: 600;
+}
+.building p {
+  color: var(--text-2);
+}
+
+/* Telefonda "Daha fazla" */
+.more-list {
+  margin-top: 24px;
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+.more-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  font-weight: 560;
+}
+.more-block {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 12px;
+}
+.more-block .prefs {
+  gap: 14px;
+}
+.more-block .pref {
+  grid-template-columns: 72px 1fr;
+}
+.more-block .seg button {
+  min-height: 44px;
+  font-size: 16px;
+}
+.more-note {
+  padding: 16px 0;
+  color: var(--text-2);
+  display: grid;
+  gap: 8px;
+}
+.more-note a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 1279px) {
+  .page {
+    padding: 32px 40px 56px;
+  }
+}
+@media (max-width: 767px) {
+  .page {
+    padding: 24px 16px 32px;
+  }
+  .page-head h1 {
+    font-size: 24px;
+    line-height: 30px;
+  }
+  .page-head p {
+    font-size: 17px;
+    line-height: 26px;
+  }
+}
+
+.gate-back {
+  margin-top: 20px;
+}
+.gate-back a {
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+.denied {
+  max-width: 760px;
+}
+
+/* Geçmiş */
+.hist-filter {
+  margin-top: 24px;
+  max-width: 420px;
+}
+.hist-filter input {
+  width: 100%;
+}
+.hist-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  max-width: 900px;
+  border-top: 1px solid var(--line-2);
+}
+.hist-row {
+  display: grid;
+  gap: 2px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: inherit;
+}
+.hist-row:hover {
+  background: var(--hover);
+}
+.hist-when,
+.hist-meta {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-3);
+}
+.hist-title {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+}

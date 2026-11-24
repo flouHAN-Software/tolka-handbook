@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en-IE">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ECEEEA" />
+    <meta name="description" content="Tolka Handbook: the internal document assistant of Tolka Insurance, a fictional home insurer. Every answer shows the passage it comes from. Concept project by flouHAN Software." />
+    <meta name="author" content="flouHAN Software" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <title>Tolka Handbook</title>
+    <script>
+      // Tema sayfa çizilmeden ayarlanır; açılışta yanlış renk görünmesin
+      try {
+        var q = new URLSearchParams(location.search);
+        var p = JSON.parse(localStorage.getItem('tolka-prefs') || '{}');
+        var th = q.get('theme') || p.theme;
+        document.documentElement.dataset.theme = th === 'dark' ? 'dark' : 'light';
+        if ((q.get('lang') || p.lang) === 'tr') document.documentElement.lang = 'tr';
+      } catch (e) {
+        document.documentElement.dataset.theme = 'light';
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

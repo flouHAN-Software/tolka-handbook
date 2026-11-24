@@ -1,0 +1,18 @@
+// Uygulama ve yanıt ucu tek Worker'da. Yerelde: npm run server   Yayın: npm run deploy
+{
+  "name": "tolka-handbook",
+  "main": "./server/index.js",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  // yanıtı yazan model (Workers AI); yerel geliştirmede de hesabın kotasını kullanır
+  "ai": { "binding": "AI" },
+  // günlük kota sayacı ve gün içi önbellek; SQLite depolama ücretsiz planda da var
+  "durable_objects": {
+    "bindings": [{ "name": "HANDBOOK", "class_name": "HandbookMeter" }]
+  },
+  "migrations": [{ "tag": "handbook-v1", "new_sqlite_classes": ["HandbookMeter"] }]
+}

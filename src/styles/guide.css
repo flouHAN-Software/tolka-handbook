@@ -1,0 +1,190 @@
+/* Rehber: geniş, okunur bir pencere. Amaç, ekranlar, önce ne denenmeli ve neye bakılmalı. */
+
+dialog.guide {
+  width: min(760px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-pop);
+}
+dialog.guide::backdrop {
+  background: var(--scrim);
+}
+.g-scroll {
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  padding: 28px 36px 24px;
+}
+.g-x {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text-2);
+}
+.g-x:hover {
+  background: var(--hover);
+}
+.g-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  padding-right: 44px;
+}
+.g-kicker {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-3);
+}
+.g-head h2 {
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 600;
+}
+.g-lang {
+  flex: none;
+}
+.g-sec {
+  margin-top: 22px;
+}
+.g-sec h3 {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.g-sec p + p {
+  margin-top: 8px;
+}
+.g-lead {
+  font-size: 18px;
+  line-height: 28px;
+}
+.g-sec p {
+  color: var(--text-2);
+  max-width: 70ch;
+}
+.g-sec .g-lead {
+  color: var(--text);
+}
+.g-screens {
+  margin: 0;
+  border-top: 1px solid var(--line);
+}
+.g-screens > div {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.g-screens dt {
+  font-weight: 600;
+}
+.g-screens dd {
+  margin: 0;
+  color: var(--text-2);
+}
+.g-tries {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+.g-tries li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--sunk);
+  border-radius: 2px;
+}
+.g-n {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 2px;
+  background: var(--mark);
+  color: var(--mark-ink);
+  font-weight: 700;
+  font-size: 14px;
+}
+.g-tries b {
+  font-weight: 600;
+  font-size: 17px;
+  line-height: 26px;
+}
+.g-tries p {
+  margin-top: 2px;
+}
+.g-look {
+  font-weight: 600;
+  color: var(--text);
+}
+.g-tries .btn {
+  margin-top: 10px;
+}
+.g-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.g-reset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-2);
+}
+
+@media (max-width: 767px) {
+  dialog.guide {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    border-radius: 0;
+  }
+  .g-scroll {
+    max-height: 100dvh;
+    padding: 20px 16px 24px;
+  }
+  .g-head {
+    flex-wrap: wrap;
+  }
+  .g-head h2 {
+    font-size: 23px;
+    line-height: 30px;
+  }
+  .g-screens > div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .g-tries li {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+  .g-tries .btn {
+    width: 100%;
+    min-height: 44px;
+    white-space: normal;
+  }
+}
