@@ -12,11 +12,123 @@ export interface Extracted {
 type Progress = (page: number, pages: number) => void;
 
 export const MAX_BYTES = 20 * 1024 * 1024;
-export const ACCEPT = '.pdf,.txt,.md,application/pdf,text/plain,text/markdown';
-export const kindOf = (name: string) => (/\.pdf$/i.test(name) ? 'pdf' : /\.(txt|md|markdown)$/i.test(name) ? 'text' : null);
+export const ACCEPT = '.pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown';
+export const kindOf = (name: string) =>
+  /\.pdf$/i.test(name) ? 'pdf' : /\.docx$/i.test(name) ? 'docx' : /\.(txt|md|markdown)$/i.test(name) ? 'text' : null;
 
 export async function extract(file: File, progress: Progress): Promise<Extracted> {
-  return kindOf(file.name) === 'pdf' ? extractPdf(file, progress) : extractText(file, progress);
+  const k = kindOf(file.name);
+  return k === 'pdf' ? extractPdf(file, progress) : k === 'docx' ? extractDocx(file, progress) : extractText(file, progress);
+}
+
+/* ---------- Word (.docx) ---------- */
+// .docx bir ZIP arşividir; metin word/document.xml içindedir. Arşiv tarayıcının kendi açıcısıyla (DecompressionStream)
+// açılır, ek kütüphane yok. Başlık biçemleri (Heading 1, Başlık 1…) bölüm, madde işaretli paragraflar liste, tablolar tablo olur.
+const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+
+async function extractDocx(file: File, progress: Progress): Promise<Extracted> {
+  progress(1, 1);
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  // Parolalı Word dosyası ZIP değil, şifreli bir kapsayıcıdır (D0 CF 11 E0)
+  if (bytes[0] === 0xd0 && bytes[1] === 0xcf && bytes[2] === 0x11 && bytes[3] === 0xe0) return { pages: 0, sections: [], failReason: 'password' };
+  let xml: string;
+  try {
+    xml = await unzip(bytes, 'word/document.xml');
+  } catch {
+    return { pages: 0, sections: [], failReason: 'unreadable' };
+  }
+  const dom = new DOMParser().parseFromString(xml, 'application/xml');
+  const body = dom.getElementsByTagNameNS(W, 'body')[0];
+  if (!body || dom.getElementsByTagName('parsererror').length) return { pages: 0, sections: [], failReason: 'unreadable' };
+
+  const sections: Section[] = [];
+  let sec: Section | null = null;
+  let list: { n?: string; text: string }[] | null = null;
+  let words = 0;
+  const page = () => Math.floor(words / 450) + 1;
+  const ensure = () => (sec ??= startSection(sections, '', page()));
+  const flushList = () => {
+    if (list?.length) addBlock(ensure(), { t: 'list', items: list });
+    list = null;
+  };
+
+  for (const el of Array.from(body.children)) {
+    if (el.localName === 'p') {
+      const text = textOf(el);
+      if (!text) continue;
+      words += text.split(' ').length;
+      const pPr = el.getElementsByTagNameNS(W, 'pPr')[0];
+      const style = pPr?.getElementsByTagNameNS(W, 'pStyle')[0]?.getAttributeNS(W, 'val') ?? '';
+      const heading = /^(heading|balk|başlık|baslik)\s*\d$/i.test(style) || /^(title|konubal)/i.test(style) || !!pPr?.getElementsByTagNameNS(W, 'outlineLvl')[0];
+      const listed = !!pPr?.getElementsByTagNameNS(W, 'numPr')[0] || /list/i.test(style);
+      if (heading) {
+        flushList();
+        sec = startSection(sections, text, page());
+      } else if (listed) {
+        (list ??= []).push({ text });
+      } else {
+        flushList();
+        addParagraph(ensure(), text);
+      }
+    } else if (el.localName === 'tbl') {
+      flushList();
+      const rows = Array.from(el.getElementsByTagNameNS(W, 'tr')).map((tr) => Array.from(tr.getElementsByTagNameNS(W, 'tc')).map(textOf));
+      if (rows.length >= 2) addBlock(ensure(), { t: 'table', head: rows[0], rows: rows.slice(1) });
+      else if (rows.length === 1) addParagraph(ensure(), rows[0].filter(Boolean).join(' · '));
+      words += rows.flat().join(' ').split(' ').length;
+    }
+  }
+  flushList();
+  const pages = Math.max(1, Math.round(words / 450));
+  const kept = sections.filter((s) => s.clauses.length);
+  return kept.length ? { pages, sections: kept } : { pages, sections: [], failReason: 'empty' };
+}
+
+/** Paragrafın ya da hücrenin düz metni: sekme ve satır sonu boşluk olur */
+function textOf(el: Element): string {
+  let out = '';
+  const walk = (n: Element) => {
+    for (const c of Array.from(n.children)) {
+      if (c.namespaceURI === W && c.localName === 't') out += c.textContent ?? '';
+      else if (c.namespaceURI === W && (c.localName === 'tab' || c.localName === 'br')) out += ' ';
+      else walk(c);
+    }
+  };
+  walk(el);
+  return out.replace(/\s+/g, ' ').trim();
+}
+
+/** ZIP arşivinden tek bir dosyayı çıkarır (merkezi dizin okunur; sıkıştırma "deflate" ise tarayıcı açar) */
+async function unzip(bytes: Uint8Array, name: string): Promise<string> {
+  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  let eocd = -1;
+  for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 65557); i--) {
+    if (v.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('zip değil');
+  const count = v.getUint16(eocd + 10, true);
+  let p = v.getUint32(eocd + 16, true);
+  const dec = new TextDecoder();
+  for (let i = 0; i < count; i++) {
+    if (v.getUint32(p, true) !== 0x02014b50) throw new Error('bozuk dizin');
+    const method = v.getUint16(p + 10, true);
+    const size = v.getUint32(p + 20, true);
+    const nameLen = v.getUint16(p + 28, true);
+    const extra = v.getUint16(p + 30, true);
+    const comment = v.getUint16(p + 32, true);
+    const local = v.getUint32(p + 42, true);
+    const entry = dec.decode(bytes.subarray(p + 46, p + 46 + nameLen));
+    if (entry === name) {
+      const start = local + 30 + v.getUint16(local + 26, true) + v.getUint16(local + 28, true);
+      const data = bytes.subarray(start, start + size);
+      if (method === 0) return dec.decode(data);
+      if (method !== 8) throw new Error('desteklenmeyen sıkıştırma');
+      const stream = new Blob([data.slice()]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+      return await new Response(stream).text();
+    }
+    p += 46 + nameLen + extra + comment;
+  }
+  throw new Error('dosya yok');
 }
 
 /* ---------- PDF ---------- */

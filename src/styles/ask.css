@@ -965,3 +965,81 @@ tr.hit::before {
     border: 1px solid CanvasText;
   }
 }
+
+/* Boş kaynak alanı: kâğıt bir sayfa, bir satırı fosforlu kalemle işaretli (yanıttaki numara bunu yapar) */
+.src-empty {
+  border-style: solid;
+  background: var(--canvas);
+}
+.src-demo {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 20px 22px 20px 52px;
+  background: var(--page);
+  box-shadow: var(--shadow-page);
+}
+.sd-line {
+  display: block;
+  height: 7px;
+  border-radius: 1px;
+  background: var(--line-2);
+}
+.sd-short {
+  width: 62%;
+}
+.sd-row {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-left: -30px;
+}
+.sd-n {
+  display: grid;
+  place-items: center;
+  height: 20px;
+  border-radius: 2px;
+  background: var(--mark);
+  color: var(--mark-ink);
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 650;
+}
+.sd-mark {
+  height: 14px;
+  background: var(--mark);
+  transform-origin: left center;
+  animation: sd-mark 0.9s 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes sd-mark {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sd-mark { animation: none; }
+}
+@media (forced-colors: active) {
+  .sd-line { background: GrayText; }
+  .sd-mark, .sd-n { background: Highlight; color: HighlightText; }
+}
+
+/* Model yazarken gelen metin; kaynak numaraları yanıt bitince eklenir */
+.ai-text.streaming p {
+  color: var(--text);
+}
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: currentColor;
+  animation: caret 1s steps(1) infinite;
+}
+@keyframes caret {
+  50% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .caret { animation: none; }
+}

@@ -48,6 +48,11 @@ async function tap(sel) {
   await loc.tap({ timeout: 8000 });
 }
 
+// Yanıt önbellekten değil, yazdırılarak gelsin: akış görünür (yalnızca yerelde geçerli bayrak)
+await page.route('**/api/handbook/answer', (r) => {
+  const body = JSON.parse(r.request().postData() || '{}');
+  return r.continue({ postData: JSON.stringify({ ...body, fresh: true }) });
+});
 await page.goto(`${BASE}/?lang=${LANG}&theme=light&as=care#/ask`, { waitUntil: 'networkidle' });
 await page.evaluate(() => document.fonts.ready);
 await pause(400);

@@ -1,13 +1,66 @@
-// Bir soruyu yanıtlar. Model modunda (varsayılan) soruya en yakın 5 bölüm Workers AI'ye gönderilir ve model
-// yalnızca bunlardan yazar; hizmete ulaşılamazsa ya da günlük ücretsiz kota dolduysa arama moduna dönülür ve bu söylenir.
+// Bir soruyu yanıtlar. Model modunda (varsayılan) soruya en yakın bölümler iki yolla bulunur: kelimeyle (BM25) ve anlamla
+// (bge-m3 vektörleri). İki sıralama birleştirilir (Reciprocal Rank Fusion), her maddeden en iyi tek bölüm alınır ve en iyi
+// beşi Workers AI'ye gönderilir; model yalnızca bunlardan yazar ve yanıt yazılırken ekrana akar. Hizmete ulaşılamazsa ya da
+// günlük ücretsiz kota dolduysa arama moduna dönülür ve bu söylenir.
 import { askModel, toModel } from '../lib/ai';
-import { Index } from '../lib/search';
+import { Index, type Passage } from '../lib/search';
+import { clearStream, setStream } from '../lib/stream';
+import { embed, seedVectors, sim, uploadVectors } from '../lib/vectors';
 import { ROLE_ASKER, ROLE_BOOST, answer, gradeRow, passageOf, searchable, withoutDate, type AnswerData, type Cite } from './answer';
 import { addAnswer, updateAnswer } from './conversations';
 import { docById } from './library';
-import type { RoleId } from './types';
+import type { Doc, RoleId } from './types';
 
 export type Mode = 'ai' | 'search';
+
+/** Anlam benzerliği bunun altındaysa bölüm aday sayılmaz (bge-m3'te ilgisiz metinler genellikle bunun altında kalır) */
+export const MIN_SIM = 0.42;
+// Reciprocal Rank Fusion sabiti ve modele gönderilen bölüm sayısı
+const RRF_K = 60;
+const SEND = 5;
+
+const clauseKey = (p: Passage) => `${p.doc.id}#${p.loc.clause}`;
+
+/** Kelime ve anlam sıralamalarını birleştirir. Vektör ucuna ulaşılamazsa yalnızca kelime sıralaması kalır. */
+export async function retrieve(q: string, docs: Doc[], role: RoleId): Promise<{ p: Passage; matched: string[]; via: ('word' | 'meaning')[] }[]> {
+  const index = new Index(docs);
+  const words = index.search(withoutDate(q), 20, ROLE_BOOST[role], 0.3).hits;
+  const fused = new Map<string, { p: Passage; matched: string[]; s: number; via: ('word' | 'meaning')[] }>();
+  const add = (p: Passage, rank: number, matched: string[], via: 'word' | 'meaning') => {
+    const k = clauseKey(p);
+    const cur = fused.get(k);
+    const s = 1 / (RRF_K + rank);
+    if (cur) {
+      cur.s += s;
+      cur.via.push(via);
+      if (!cur.matched.length) cur.matched = matched;
+    } else fused.set(k, { p, matched, s, via: [via] });
+  };
+  words.forEach((h, i) => add(h.p, i, h.matched, 'word'));
+
+  const [qv] = (await embed([q])) ?? [];
+  if (qv) {
+    const seed = await seedVectors();
+    const scored: { p: Passage; x: number }[] = [];
+    for (const p of index.passages) {
+      const v = p.doc.uploaded ? uploadVectors(p.doc.id)?.get(p.key) : seed.get(p.key);
+      if (!v) continue;
+      const x = sim(qv, v);
+      if (x >= MIN_SIM) scored.push({ p, x });
+    }
+    scored.sort((a, b) => b.x - a.x);
+    const seen = new Set<string>();
+    let rank = 0;
+    for (const { p } of scored) {
+      const k = clauseKey(p);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      add(p, rank++, [], 'meaning');
+      if (rank >= 20) break;
+    }
+  }
+  return [...fused.values()].sort((a, b) => b.s - a.s).slice(0, SEND);
+}
 
 export function ask(convId: string | undefined, q: string, role: RoleId, lossDateField: string | undefined, lang: 'en' | 'tr', mode: Mode, only?: string) {
   const base = answer(q, role, lossDateField, only);
@@ -16,17 +69,22 @@ export function ask(convId: string | undefined, q: string, role: RoleId, lossDat
     return { convId: id, answer: base, done: Promise.resolve(base) };
   }
   const { docs } = searchable(role, base.lossDate, only);
-  const hits = new Index(docs).search(withoutDate(q), 5, ROLE_BOOST[role], 0.3).hits;
-  // Hiçbir bölüm eşleşmiyorsa modele sorulmaz (kota harcanmaz)
-  if (!hits.length) {
-    const id = addAnswer(convId, base);
-    return { convId: id, answer: base, done: Promise.resolve(base) };
-  }
-  const sent: Cite[] = hits.map((h) => gradeRow({ key: h.p.key, docId: h.p.doc.id, ref: h.p.ref, loc: h.p.loc, matched: h.matched }, role));
-  const pending: AnswerData = { ...base, mode: 'ai', pending: true, kind: 'found', cites: sent };
+  const pending: AnswerData = { ...base, mode: 'ai', pending: true, kind: 'found', cites: [] };
   const id = addAnswer(convId, pending);
 
-  const done = askModel(q, lang, ROLE_ASKER[role], sent.map((c) => toModel(passageOf(c)!)), role).then((r) => {
+  const done = (async (): Promise<AnswerData> => {
+    const picked = await retrieve(q, docs, role);
+    // Hiçbir bölüm eşleşmiyorsa modele sorulmaz (kota harcanmaz)
+    if (!picked.length) {
+      const next = { ...base, id: pending.id };
+      updateAnswer(id, pending.id, next);
+      return next;
+    }
+    const sent: Cite[] = picked.map(({ p, matched }) => gradeRow({ key: p.key, docId: p.doc.id, ref: p.ref, loc: p.loc, matched }, role));
+    updateAnswer(id, pending.id, { ...pending, cites: sent });
+
+    const r = await askModel(q, lang, ROLE_ASKER[role], sent.map((c) => toModel(passageOf(c)!)), role, undefined, (s) => setStream(pending.id, s));
+    clearStream(pending.id);
     let next: AnswerData;
     if (!r.ok) {
       next = { ...base, id: pending.id, fallback: r.reason };
@@ -61,6 +119,6 @@ export function ask(convId: string | undefined, q: string, role: RoleId, lossDat
     }
     updateAnswer(id, pending.id, next);
     return next;
-  });
+  })();
   return { convId: id, answer: pending, done };
 }

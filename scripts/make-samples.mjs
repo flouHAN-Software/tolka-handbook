@@ -5,7 +5,8 @@
 // Kullanım: node scripts/make-samples.mjs   (metin özgündür, kurgusal Tolka Insurance için yazıldı)
 
 import { chromium } from 'playwright';
-import { readFile, mkdir } from 'node:fs/promises';
+import { readFile, mkdir, writeFile } from 'node:fs/promises';
+import { deflateRawSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
 const root = new URL('../', import.meta.url);
@@ -124,7 +125,75 @@ small { font: 13px A, sans-serif; color: #555; }
 <p style="margin-top:40px"><small>Tolka Insurance DAC · Boiler service leaflet · Printed September 2025</small></p>
 </div></body></html>`;
 
+// ---------- Word (.docx) ----------
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const run = (t) => `<w:r><w:t xml:space="preserve">${esc(t)}</w:t></w:r>`;
+const para = (t, style) => `<w:p>${style ? `<w:pPr><w:pStyle w:val="${style}"/></w:pPr>` : ''}${run(t)}</w:p>`;
+const item = (t) => `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr></w:pPr>${run(t)}</w:p>`;
+const table = (rows) => `<w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="0" w:type="auto"/></w:tblPr>${rows.map((r) => `<w:tr>${r.map((c) => `<w:tc><w:p>${run(c)}</w:p></w:tc>`).join('')}</w:tr>`).join('')}</w:tbl>`;
+const hybrid = [
+  para('Hybrid Working Policy', 'Title'),
+  para('Tolka Insurance DAC · Version 2026.1 · In force from 1 March 2026 · Owner: People team'),
+  para('1 Who this applies to', 'Heading1'),
+  para('This policy applies to everyone employed by Tolka with at least six months’ service. Customer care agents on the phone rota work from the office on their rota days.'),
+  para('2 Days in the office', 'Heading1'),
+  para('Most teams are in the office on Tuesday and Thursday. Your manager can agree a different pattern with you in writing.'),
+  para('You can work from home for up to three days a week. Working from abroad needs written approval from the People team in advance.'),
+  para('3 Equipment', 'Heading1'),
+  item('a laptop and a headset, issued on your first day;'),
+  item('a second screen, on request;'),
+  item('an adjustable chair, after a workstation assessment.'),
+  para('4 Allowances', 'Heading1'),
+  table([['Item', 'Amount', 'How it is paid'], ['Home working allowance', '€4 for each day worked from home', 'Through payroll, monthly'], ['Broadband contribution', '€30 a month', 'Through payroll'], ['Desk and chair', 'Up to €250, once', 'Expense claim with receipt']]),
+  para('5 Security at home', 'Heading1'),
+  para('Never print customer documents at home. Lock your screen whenever you step away.'),
+  para('Report a lost or stolen laptop to the IT Service Desk within one hour, at any time of day.')
+].join('');
+const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${hybrid}<w:sectPr/></w:body></w:document>`;
+const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`;
+const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
+
+function crc32(buf) {
+  let crc = 0xffffffff;
+  for (const b of buf) {
+    let c = (crc ^ b) & 0xff;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    crc = (crc >>> 8) ^ c;
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+function zip(files) {
+  const parts = [];
+  const dir = [];
+  let offset = 0;
+  for (const f of files) {
+    const name = Buffer.from(f.name);
+    const raw = Buffer.from(f.data, 'utf8');
+    const deflate = f.name.endsWith('document.xml');
+    const data = deflate ? deflateRawSync(raw) : raw;
+    const crc = crc32(raw);
+    const lh = Buffer.alloc(30);
+    lh.writeUInt32LE(0x04034b50, 0); lh.writeUInt16LE(20, 4); lh.writeUInt16LE(deflate ? 8 : 0, 8);
+    lh.writeUInt32LE(crc, 14); lh.writeUInt32LE(data.length, 18); lh.writeUInt32LE(raw.length, 22); lh.writeUInt16LE(name.length, 26);
+    parts.push(lh, name, data);
+    const ch = Buffer.alloc(46);
+    ch.writeUInt32LE(0x02014b50, 0); ch.writeUInt16LE(20, 4); ch.writeUInt16LE(20, 6); ch.writeUInt16LE(deflate ? 8 : 0, 10);
+    ch.writeUInt32LE(crc, 16); ch.writeUInt32LE(data.length, 20); ch.writeUInt32LE(raw.length, 24); ch.writeUInt16LE(name.length, 28); ch.writeUInt32LE(offset, 42);
+    dir.push(ch, name);
+    offset += 30 + name.length + data.length;
+  }
+  const cd = Buffer.concat(dir);
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(files.length, 8); end.writeUInt16LE(files.length, 10); end.writeUInt32LE(cd.length, 12); end.writeUInt32LE(offset, 16);
+  return Buffer.concat([...parts, cd, end]);
+}
+
 await mkdir(out, { recursive: true });
+await writeFile(out + 'Hybrid Working Policy 2026.1.docx', zip([
+  { name: '[Content_Types].xml', data: contentTypes },
+  { name: '_rels/.rels', data: rels },
+  { name: 'word/document.xml', data: documentXml }
+]));
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage();

@@ -316,11 +316,11 @@ try {
     await page.click('.err-summary a >> nth=1');
     ((await page.evaluate(() => document.activeElement?.id)) === 'add-title' ? ok : fail)('ekleme: özetteki bağlantı ilgili alana götürüyor');
     await page.fill('#add-title', 'Claims notes');
-    await page.setInputFiles('#add-file', { name: 'notes.docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', buffer: Buffer.from('x') });
+    await page.setInputFiles('#add-file', { name: 'notes.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: Buffer.from('x') });
     await page.waitForTimeout(100);
-    const typeErr = (await page.textContent('#add-file-err'))?.includes('must be a PDF, TXT or Markdown');
+    const typeErr = (await page.textContent('#add-file-err'))?.includes('must be a PDF, Word (.docx), TXT or Markdown');
     const kept = (await page.inputValue('#add-title')) === 'Claims notes';
-    (typeErr && kept ? ok : fail)('ekleme: Word dosyası reddediliyor, girilen ad silinmiyor');
+    (typeErr && kept ? ok : fail)('ekleme: desteklenmeyen dosya (Excel) reddediliyor, girilen ad silinmiyor');
     await page.keyboard.press('Escape');
     await page.waitForTimeout(150);
     const closed = (await page.locator('dialog.add[open]').count()) === 0 && (await page.evaluate(() => document.activeElement?.classList.contains('lib-add')));
@@ -523,6 +523,23 @@ try {
     const cards = await page.locator('.qa:last-child .quotes li').count();
     (fb.includes('couldn’t be reached') && cards > 0 ? ok : fail)('model: hizmete ulaşılamazsa nedenini söyleyip arama moduna dönüyor');
     (errors.length ? fail : ok)(`model: sayfa hatası yok${errors.length ? ' · ' + errors[0] : ''}`);
+    await ctx.close();
+  }
+  if (!process.env.NO_AI) {
+    const ctx = await browser.newContext(SIZES[0].opts);
+    const page = await ctx.newPage();
+    await page.goto(`${BASE}/?as=care&lang=tr#/ask`, { waitUntil: 'networkidle' });
+    const live = await page.evaluate(async () => (await fetch('/api/handbook/embed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).status);
+    if (live === 400) {
+      await page.fill('#ask-q', 'Evde kalamayan müşteriye otel ayarlayabilir miyim?');
+      await page.keyboard.press('Enter');
+      await page.waitForFunction(() => !document.querySelector('[aria-busy="true"]'), null, { timeout: 40000 }).catch(() => {});
+      await page.waitForTimeout(300);
+      const srcs = (await page.textContent('.qa:last-child')) ?? '';
+      (srcs.includes('Customer Care Call Guide') && (await page.locator('.qa:last-child .ai-text .cite').count()) > 0 ? ok : fail)('anlam: Türkçe "evde kalamayan" sorusu İngilizce "cannot be lived in" maddesini buluyor (görüşme rehberi)');
+    } else {
+      log(`bilgi anlam: vektör ucu kapalı (yanıt ${live}); anlam araması denemesi atlandı`);
+    }
     await ctx.close();
   }
 
@@ -748,7 +765,11 @@ try {
     (shown ? ok : fail)(`${tag} ilk girişte rehber açılıyor`);
     const g = (await page.textContent('dialog.guide')) ?? '';
     (g.includes('What each screen is for') && g.includes('Try these first') && g.includes('Look for:') && g.includes('You’re in as Ciarán Byrne') && !/Ctrl|⌘|Esc\b/.test(g) ? ok : fail)(`${tag} amaç, hangi rolle girildiği, ekranlar, önce denenecekler, neye bakılacak; kısayol işareti yok`);
-    ((await page.locator('.g-tries li').count()) === 4 && (await page.locator('.g-tries li .btn', { hasText: 'Add a PDF' }).count()) === 1 ? ok : fail)(`${tag} 4 deneme (biri kendi PDF'iniz), her birinde düğme`);
+    ((await page.locator('.g-tries li').count()) === 4 && (await page.locator('.g-tries li .btn', { hasText: 'Add a document' }).count()) === 1 ? ok : fail)(`${tag} 4 deneme (biri kendi PDF'iniz), her birinde düğme`);
+    if (!mobile) {
+      const side = await page.evaluate(() => { const d = document.querySelector('dialog.guide'); return !!d && d.classList.contains('side') && !d.matches(':modal'); });
+      (side ? ok : fail)(`${tag} geniş ekranda rehber yan panel, arkadaki Sor ekranı kullanılabilir`);
+    }
     if (SHOTS) await page.screenshot({ path: join(OUT, size.id, 'rehber-en-light.png') });
     const a = await page.evaluate(audit);
     (a.pageOverflow <= 0 && !a.small.length ? ok : fail)(`${tag} taşma ve küçük yazı yok${a.small[0] ? ' · ' + a.small[0] : ''}`);
@@ -828,7 +849,55 @@ try {
     await page.click('.detail-ask');
     await page.waitForTimeout(300);
     (page.url().endsWith('#/ask') && (await page.textContent('.scope-t'))?.includes('Escape of Water Claims Guide') ? ok : fail)('belge kartı: "Yalnızca bu belgeye sor" Sor ekranını o belgeyle açıyor');
+    // Word dosyası: başlıklar, madde işaretli liste ve tablo okunuyor; tablodaki satır bulunuyor
+    await page.goto(`${BASE}/#/ask`, { waitUntil: 'networkidle' });
+    await page.click('.start-own .btn');
+    await page.waitForTimeout(250);
+    await page.click('dialog.add .samples .linkish:has-text("Word")');
+    await page.waitForTimeout(500);
+    await page.click('dialog.add button[type=submit]');
+    await page.waitForFunction(() => document.querySelector('.scope') && !/okunuyor|reading/.test(document.querySelector('.scope').textContent), null, { timeout: 30000 });
+    const docx = await page.evaluate(() => {
+      const d = JSON.parse(localStorage.getItem('tolka:uploads') || '[]').find((x) => /\.docx$/.test(x.file));
+      return d ? { n: d.sections.length, kinds: d.sections.flatMap((s) => s.clauses.flatMap((c) => c.blocks.map((b) => b.t))) } : null;
+    });
+    (docx && docx.n === 6 && docx.kinds.includes('list') && docx.kinds.includes('table') ? ok : fail)(`Word: .docx başlıklara, listeye ve tabloya ayrışıyor (${docx ? docx.n + ' bölüm' : 'yok'})`);
+    // Yalnızca arama modu kelimeyle arar (Türkçe soru İngilizce tabloyla eşleşmez; onu model modundaki anlam araması bulur)
+    await page.fill('#ask-q', 'How much is the broadband contribution?');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(500);
+    (((await page.textContent('.qa:last-child')) ?? '').includes('Broadband contribution') ? ok : fail)('Word: tablodaki satır soruyla bulunuyor (Broadband contribution)');
     (errors.length ? fail : ok)(`kendi belge: sayfa hatası yok${errors.length ? ' · ' + errors[0] : ''}`);
+    await ctx.close();
+  }
+
+  // 14) Akan yanıt (taklit sunucuyla, kota harcamadan): parçalar ekranda birleşiyor, sonunda kaynak numarası ekleniyor;
+  //     sunucu kota hatası gönderirse arama moduna dönülüp nedeni yazılıyor
+  {
+    const ctx = await browser.newContext(SIZES[0].opts);
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    const done = { ok: true, model: 'Gemma 4', modelKey: 'gemma', verdict: 'answered', answer: 'The excess is €400 [1].', quotes: [], dropped: 0, cited: [1], neurons: 1 };
+    const sse = (events) => events.map((e) => `data: ${JSON.stringify(e)}`).join('\n\n') + '\n\n';
+    await page.route('**/api/handbook/embed', (r) => r.fulfill({ status: 503, contentType: 'application/json', body: '{"ok":false,"reason":"busy"}' }));
+    await page.route('**/api/handbook/answer', (r) => r.fulfill({ status: 200, headers: { 'Content-Type': 'text/event-stream; charset=utf-8' }, body: sse([{ t: 'd', s: 'The excess ' }, { t: 'd', s: 'is €400 [1' }, { t: 'd', s: '].' }, { t: 'done', r: done }]) }));
+    await open(page, 'en', 'light', 'ask');
+    await page.fill('#ask-q', 'What is the escape of water excess?');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => !document.querySelector('[aria-busy="true"]'), null, { timeout: 10000 }).catch(() => {});
+    await page.waitForTimeout(200);
+    const txt = (await page.textContent('.qa:last-child .ai-text')) ?? '';
+    (txt.includes('The excess is €400') && (await page.locator('.qa:last-child .ai-text .cite').count()) === 1 ? ok : fail)('akış: parçalar birleşiyor, yanıt bitince kaynak numarası ekleniyor');
+    await page.unroute('**/api/handbook/answer');
+    await page.route('**/api/handbook/answer', (r) => r.fulfill({ status: 200, headers: { 'Content-Type': 'text/event-stream' }, body: sse([{ t: 'err', reason: 'quota' }]) }));
+    await page.fill('#ask-q', 'Do we cover a dog chewing the sofa?');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => !document.querySelector('[aria-busy="true"]'), null, { timeout: 10000 }).catch(() => {});
+    await page.waitForTimeout(200);
+    const fb = (await page.textContent('.qa:last-child')) ?? '';
+    (/daily|allowance|quota/i.test(fb) ? ok : fail)('akış: sunucu kota hatası gönderirse arama moduna dönüp nedenini yazıyor');
+    (errors.length ? fail : ok)(`akış: sayfa hatası yok${errors.length ? ' · ' + errors[0] : ''}`);
     await ctx.close();
   }
 } finally {

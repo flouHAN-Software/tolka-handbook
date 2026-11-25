@@ -19,8 +19,11 @@ const SAMPLES = [
   { key: 'add.sample.text' as const, file: 'Home Emergency Cover 2026.1.pdf', meta: { title: 'Home Emergency Cover', kind: 'wording' as DocKind, version: '2026.1', inForce: '2026-03-01', owner: 0, classification: 'public' as Classification, reviewMonths: 12 } },
   { key: 'add.sample.scan' as const, file: 'Boiler Service Leaflet (scan).pdf', meta: { title: 'Boiler Service Leaflet', kind: 'guide' as DocKind, version: '2025', inForce: '2025-09-01', owner: 5, classification: 'public' as Classification, reviewMonths: 12 } },
   // Türkçe belgeyle Türkçe soru: kurgusal bir şirketin personel el kitabı
-  { key: 'add.sample.tr' as const, file: 'Personel El Kitabi 2026.1.pdf', meta: { title: 'Personel El Kitabı', kind: 'manual' as DocKind, version: '2026.1', inForce: '2026-01-01', owner: 7, classification: 'internal' as Classification, reviewMonths: 12 } }
+  { key: 'add.sample.tr' as const, file: 'Personel El Kitabi 2026.1.pdf', meta: { title: 'Personel El Kitabı', kind: 'manual' as DocKind, version: '2026.1', inForce: '2026-01-01', owner: 7, classification: 'internal' as Classification, reviewMonths: 12 } },
+  // Word dosyası: başlık biçemleri, madde işaretli liste ve tablo
+  { key: 'add.sample.docx' as const, file: 'Hybrid Working Policy 2026.1.docx', meta: { title: 'Hybrid Working Policy', kind: 'procedure' as DocKind, version: '2026.1', inForce: '2026-03-01', owner: 7, classification: 'internal' as Classification, reviewMonths: 12 } }
 ];
+const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
 const size = (b: number) => (b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`);
 
@@ -81,7 +84,7 @@ export function AddDocument({ open, onClose, onAdded, quick = false }: { open: b
   const takeSample = async (i: number) => {
     const s = SAMPLES[i];
     const blob = await (await fetch(`./samples/${encodeURIComponent(s.file)}`)).blob();
-    setFile(new File([blob], s.file, { type: 'application/pdf' }));
+    setFile(new File([blob], s.file, { type: s.file.endsWith('.docx') ? DOCX : 'application/pdf' }));
     setTitle(s.meta.title); setKind(s.meta.kind); setVersion(s.meta.version); setInForce(s.meta.inForce);
     setOwner(s.meta.owner); setLevel(s.meta.classification); setReview(s.meta.reviewMonths);
     setErrors({});

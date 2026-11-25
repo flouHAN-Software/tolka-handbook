@@ -29,13 +29,38 @@ export function toModel(p: Passage): ModelPassage {
   };
 }
 
-export async function askModel(q: string, lang: 'en' | 'tr', asker: string, passages: ModelPassage[], role: string, model?: string): Promise<ModelResult> {
+/** onText verilirse yanıt yazılırken parça parça gelir (önbellekten gelen yanıt tek seferde gelir) */
+export async function askModel(q: string, lang: 'en' | 'tr', asker: string, passages: ModelPassage[], role: string, model?: string, onText?: (s: string) => void): Promise<ModelResult> {
   try {
     const r = await fetch('/api/handbook/answer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ q, lang, asker, role, passages, model })
+      body: JSON.stringify({ q, lang, asker, role, passages, model, stream: !!onText })
     });
+    if (r.body && (r.headers.get('Content-Type') ?? '').includes('text/event-stream')) {
+      const reader = r.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      let text = '';
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let i;
+        while ((i = buf.indexOf('\n\n')) >= 0) {
+          const m = /^data:\s?(.*)$/m.exec(buf.slice(0, i));
+          buf = buf.slice(i + 2);
+          if (!m) continue;
+          const e = JSON.parse(m[1]);
+          if (e.t === 'd') {
+            text += e.s;
+            onText?.(text);
+          } else if (e.t === 'done') return e.r;
+          else if (e.t === 'err') return { ok: false, reason: e.reason ?? 'busy' };
+        }
+      }
+      return { ok: false, reason: 'busy' };
+    }
     const j = await r.json().catch(() => null);
     if (j?.ok) return j;
     return { ok: false, reason: j?.reason ?? 'busy' };

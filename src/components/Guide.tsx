@@ -29,10 +29,23 @@ export function Guide({ onClose }: { onClose: () => void }) {
   const tr = prefs.lang === 'tr';
   const who = account ?? ACCOUNTS[1];
 
+  // 1280 px ve üstünde rehber, ilk girişte boş duran kaynak sütununun yerinde yan panel olarak açılır;
+  // arkadaki ekran kullanılabilir kalır. Daha dar ekranda pencere olarak açılır.
+  const [side] = useState(() => matchMedia('(min-width: 1280px)').matches);
   useEffect(() => {
     const d = ref.current;
-    if (d && !d.open) d.showModal();
-  }, []);
+    if (!d || d.open) return;
+    if (side) d.show();
+    else d.showModal();
+  }, [side]);
+  // Yan panel kipte Esc'yi tarayıcı kendisi işlemez
+  useEffect(() => {
+    if (!side) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && ref.current?.open) close(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [side]);
 
   const close = () => {
     set({ guideSeen: true });
@@ -67,7 +80,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
   ];
 
   return (
-    <dialog ref={ref} className="guide" aria-labelledby="g-h" onClose={onClose}>
+    <dialog ref={ref} className={`guide${side ? ' side' : ''}`} aria-labelledby="g-h" onClose={onClose}>
       <div className="g-scroll">
         <header className="g-head">
           <div>

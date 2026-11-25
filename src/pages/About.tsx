@@ -9,15 +9,15 @@ const GITHUB = 'https://github.com/flouHAN-Software/tolka-handbook';
 
 const STEPS: Key[] = ['ab.use1', 'ab.use2', 'ab.use3', 'ab.use4', 'ab.use5', 'ab.use6'];
 
-const SKILLS: Key[] = ['ab.sk.ai', 'ab.sk.api', 'ab.sk.search', 'ab.sk.docs', 'ab.sk.access', 'ab.sk.auto', 'ab.sk.a11y', 'ab.sk.lang'];
+const SKILLS: Key[] = ['ab.sk.ai', 'ab.sk.api', 'ab.sk.search', 'ab.sk.scale', 'ab.sk.docs', 'ab.sk.access', 'ab.sk.auto', 'ab.sk.a11y', 'ab.sk.lang'];
 
 // Araç adları özel addır; iki dilde aynı yazılır
 const TOOLS: [Key, string][] = [
   ['ab.tl.lang', 'TypeScript, JavaScript, HTML, CSS'],
   ['ab.tl.ui', 'React 19, Vite'],
   ['ab.tl.server', 'Cloudflare Workers, Durable Objects (SQLite)'],
-  ['ab.tl.ai', 'Gemma 4 · Cloudflare Workers AI'],
-  ['ab.tl.docs', 'pdf.js'],
+  ['ab.tl.ai', 'Gemma 4, bge-m3 · Cloudflare Workers AI'],
+  ['ab.tl.docs', 'pdf.js, DecompressionStream, DOMParser'],
   ['ab.tl.test', 'Playwright, axe-core, ffmpeg'],
   ['ab.tl.type', 'Atkinson Hyperlegible Next, Source Serif 4']
 ];

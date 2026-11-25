@@ -385,12 +385,13 @@ export const STR = {
   'add.file': ['File', 'Dosya'],
   'add.file.choose': ['Choose a file', 'Dosya seçin'],
   'add.file.drop': ['or drag it here', 'ya da buraya sürükleyin'],
-  'add.file.hint': ['PDF, TXT or Markdown, up to 20 MB', 'PDF, TXT ya da Markdown; en fazla 20 MB'],
+  'add.file.hint': ['PDF, Word (.docx), TXT or Markdown, up to 20 MB', 'PDF, Word (.docx), TXT ya da Markdown; en fazla 20 MB'],
   'add.file.change': ['Choose a different file', 'Başka bir dosya seçin'],
   'add.sample': ['No file to hand? Use a sample:', 'Elinizde dosya yoksa örneklerden birini kullanın:'],
   'add.sample.text': ['Home Emergency Cover (PDF with text)', 'Acil Durum Teminatı (metinli PDF)'],
   'add.sample.scan': ['Boiler service leaflet (scanned PDF)', 'Kombi bakım broşürü (taranmış PDF)'],
   'add.sample.tr': ['Staff handbook in Turkish (PDF with text)', 'Türkçe personel el kitabı (metinli PDF)'],
+  'add.sample.docx': ['Hybrid working policy (Word)', 'Hibrit çalışma politikası (Word)'],
   'add.f.title': ['Title', 'Belgenin adı'],
   'add.f.kind': ['Type', 'Türü'],
   'add.f.version': ['Version', 'Sürüm'],
@@ -410,7 +411,7 @@ export const STR = {
   'add.submit': ['Add to the Handbook', 'Handbook’a ekle'],
   'add.cancel': ['Cancel', 'Vazgeç'],
   'err.file': ['Select a file to add', 'Eklenecek dosyayı seçin'],
-  'err.type': ['The selected file must be a PDF, TXT or Markdown file', 'Seçilen dosya PDF, TXT ya da Markdown olmalı'],
+  'err.type': ['The selected file must be a PDF, Word (.docx), TXT or Markdown file', 'Seçilen dosya PDF, Word (.docx), TXT ya da Markdown olmalı'],
   'err.size': ['The selected file must be smaller than 20 MB', 'Seçilen dosya 20 MB’tan küçük olmalı'],
   'err.title': ['Enter a title', 'Belgenin adını yazın'],
   'err.version': ['Enter a version, for example 1.0', 'Bir sürüm yazın, örneğin 1.0'],
@@ -508,6 +509,7 @@ export const STR = {
     'Gemma 4 runs on Cloudflare Workers AI. Only the few passages that match your question are sent to it.',
     'Gemma 4, Cloudflare Workers AI üzerinde çalışır. Ona yalnızca sorunuza uyan birkaç bölüm gönderilir.'
   ],
+  'ai.searching': ['Finding the passages that answer the question, by wording and by meaning…', 'Soruyu yanıtlayan bölümler hem kelimeyle hem anlamla aranıyor…'],
   'ai.pending': [
     'Gemma 4 is writing an answer from {n} passages on Cloudflare Workers AI. This usually takes a few seconds.',
     'Gemma 4, Cloudflare Workers AI üzerinde {n} bölümden yanıt yazıyor. Bu genellikle birkaç saniye sürer.'
@@ -574,8 +576,8 @@ export const STR = {
     'Hasar tarihi ekleyip muafiyeti yeniden sorun: yanıt, o tarihte yürürlükte olan poliçe şartlarına göre değişir.'
   ],
   'ab.use5': [
-    'Add a PDF of your own from the Ask screen and ask about it: the answers come only from that document. Documents shows each document’s owner and review date, and compares two versions.',
-    'Sor ekranından kendi PDF dosyanızı ekleyip ona soru sorun: yanıtlar yalnızca o belgeden gelir. Belgeler ekranında her belgenin sorumlusu ve gözden geçirme tarihi görünür, iki sürüm karşılaştırılır.'
+    'Add a PDF or Word file of your own from the Ask screen and ask about it: the answers come only from that document. Documents shows each document’s owner and review date, and compares two versions.',
+    'Sor ekranından kendi PDF ya da Word dosyanızı ekleyip ona soru sorun: yanıtlar yalnızca o belgeden gelir. Belgeler ekranında her belgenin sorumlusu ve gözden geçirme tarihi görünür, iki sürüm karşılaştırılır.'
   ],
   'ab.use6': [
     'Sign in as Declan, the knowledge manager, to see the questions the documents couldn’t answer.',
@@ -586,23 +588,28 @@ export const STR = {
   'ab.built.lead': ['Each item is a part of the app you can try for yourself.', 'Her madde, uygulamada kendiniz deneyebileceğiniz bir parçadır.'],
   'ab.sk.ai': ['AI integration', 'Yapay zeka entegrasyonu'],
   'ab.sk.ai.d': [
-    'Answers are written by Gemma 4 on Cloudflare Workers AI, using only the passages the search found. Every quote is checked word for word against the document. Four models were tried on the same six questions before Gemma 4 was chosen.',
-    'Yanıtları Cloudflare Workers AI üzerindeki Gemma 4 yazar ve yalnızca aramanın bulduğu bölümleri kullanır. Her alıntı belgeyle kelimesi kelimesine karşılaştırılır. Gemma 4, dört model aynı altı soruyla denendikten sonra seçildi.'
+    'Answers are written by Gemma 4 on Cloudflare Workers AI, using only the passages the search found, and stream onto the screen as they are written. Source numbers and quotes are added once the answer has been checked: every quote is compared word for word with the document. Four models were tried on the same six questions before Gemma 4 was chosen.',
+    'Yanıtları Cloudflare Workers AI üzerindeki Gemma 4 yazar; yalnızca aramanın bulduğu bölümleri kullanır ve metin yazıldıkça ekrana akar. Kaynak numaraları ve alıntılar yanıt denetlendikten sonra eklenir: her alıntı belgeyle kelimesi kelimesine karşılaştırılır. Gemma 4, dört model aynı altı soruyla denendikten sonra seçildi.'
   ],
   'ab.sk.api': ['API development', 'API geliştirme'],
   'ab.sk.api.d': [
-    'The app talks to its own endpoint, POST /api/handbook/answer, running on Cloudflare Workers. It checks where each request comes from, limits questions per person, keeps a daily usage budget and caches the day’s answers in a SQLite-backed Durable Object.',
-    'Uygulama, Cloudflare Workers üzerinde çalışan kendi ucuyla konuşur: POST /api/handbook/answer. Bu uç isteğin nereden geldiğini denetler, kişi başına soru sayısını sınırlar, günlük kullanım bütçesini tutar ve günün yanıtlarını SQLite tabanlı bir Durable Object’te önbelleğe alır.'
+    'The app talks to two endpoints of its own on Cloudflare Workers: /api/handbook/answer streams the answer as server-sent events, and /api/handbook/embed turns text into vectors. They check where each request comes from, limit requests per person, keep a daily usage budget and cache results in a SQLite-backed Durable Object.',
+    'Uygulama, Cloudflare Workers üzerinde çalışan iki ucuyla konuşur: /api/handbook/answer yanıtı yazıldıkça akış hâlinde (server-sent events) gönderir, /api/handbook/embed metni vektöre çevirir. Uçlar isteğin nereden geldiğini denetler, kişi başına istek sayısını sınırlar, günlük kullanım bütçesini tutar ve sonuçları SQLite tabanlı bir Durable Object’te önbelleğe alır.'
   ],
   'ab.sk.search': ['Search', 'Arama'],
   'ab.sk.search.d': [
-    'BM25 ranking in the browser, with stemming for English and Turkish, a Turkish-to-English glossary and extra weight for the asker’s role. Search can be limited to one document. When the model can’t be reached, the app falls back to this search and says so on screen.',
-    'Tarayıcıda BM25 sıralaması; İngilizce ve Türkçe kök bulma, Türkçe–İngilizce sözlük ve soranın rolüne göre ek ağırlık. Arama tek bir belgeyle sınırlanabilir. Modele ulaşılamazsa uygulama bu aramaya geçer ve bunu ekranda yazar.'
+    'Two searches, merged with Reciprocal Rank Fusion: BM25 on the wording, with English and Turkish stemming and extra weight for the asker’s role, and meaning search with bge-m3 vectors, which finds the clause even when the question uses other words or another language. Search can be limited to one document. When the model can’t be reached, the app falls back to word search and says so on screen.',
+    'İki arama, Reciprocal Rank Fusion ile birleştirilir: kelimeye göre BM25 (İngilizce ve Türkçe kök bulma, soranın rolüne göre ek ağırlık) ve bge-m3 vektörleriyle anlam araması; soru başka kelimelerle ya da başka bir dilde sorulsa da doğru maddeyi bulur. Arama tek bir belgeyle sınırlanabilir. Modele ulaşılamazsa uygulama kelime aramasına geçer ve bunu ekranda yazar.'
+  ],
+  'ab.sk.scale': ['Scale', 'Ölçek'],
+  'ab.sk.scale.d': [
+    'Measured with the app’s own search code on an archive grown to 50,220 passages (the 11 documents copied 180 times), on this machine with Node 24: the word index builds in about half a second, and each question takes about 36 ms by wording and 45 ms by meaning. Past that size the vectors would move from the browser to an index on the server.',
+    'Uygulamanın kendi arama koduyla, 50.220 bölüme büyütülmüş bir arşivde ölçüldü (11 belge 180 kez çoğaltıldı; bu bilgisayarda, Node 24 ile): kelime dizini yaklaşık yarım saniyede kuruluyor, her soru kelimeyle yaklaşık 36 ms, anlamla 45 ms sürüyor. Daha büyük arşivlerde vektörler tarayıcıdan sunucudaki bir dizine taşınır.'
   ],
   'ab.sk.docs': ['Document processing', 'Belge işleme'],
   'ab.sk.docs.d': [
-    'PDFs are read in the browser with pdf.js, and headings and numbered clauses are picked out. Scanned, password-protected and empty files are told apart. Two versions of a document are compared word by word.',
-    'PDF dosyaları tarayıcıda pdf.js ile okunur; başlıklar ve numaralı maddeler ayrıştırılır. Taranmış, parolalı ve boş dosyalar birbirinden ayırt edilir. Bir belgenin iki sürümü kelime kelime karşılaştırılır.'
+    'PDFs are read in the browser with pdf.js. Word files (.docx) are opened by a small ZIP and XML reader written for this app, with no extra library. Headings, numbered clauses, lists and tables are picked out; scanned, password-protected and empty files are told apart. Two versions of a document are compared word by word.',
+    'PDF dosyaları tarayıcıda pdf.js ile okunur. Word dosyaları (.docx) bu uygulama için yazılmış küçük bir ZIP ve XML okuyucuyla, ek kütüphane olmadan açılır. Başlıklar, numaralı maddeler, listeler ve tablolar ayrıştırılır; taranmış, parolalı ve boş dosyalar birbirinden ayırt edilir. Bir belgenin iki sürümü kelime kelime karşılaştırılır.'
   ],
   'ab.sk.access': ['Role-based access', 'Rol bazlı yetkilendirme'],
   'ab.sk.access.d': [
@@ -628,8 +635,8 @@ export const STR = {
   'ab.tl.lang': ['Languages', 'Diller'],
   'ab.tl.ui': ['Interface', 'Arayüz'],
   'ab.tl.server': ['Server', 'Sunucu'],
-  'ab.tl.ai': ['Language model', 'Dil modeli'],
-  'ab.tl.docs': ['PDF reading', 'PDF okuma'],
+  'ab.tl.ai': ['Models', 'Modeller'],
+  'ab.tl.docs': ['Document reading', 'Belge okuma'],
   'ab.tl.test': ['Testing and recording', 'Test ve kayıt'],
   'ab.tl.type': ['Typefaces', 'Yazı tipleri'],
   'ab.uses': ['What it could become', 'Bu yapıyla neler yapılabilir'],
@@ -676,10 +683,10 @@ export const STR = {
   'start.switch': ['Switch role', 'Rolü değiştir'],
   'own.title': ['Try it with your own document', 'Kendi belgenizle deneyin'],
   'own.text': [
-    'Add a PDF and the answers will come only from it. The file is read in your browser and isn’t uploaded.',
-    'Bir PDF ekleyin; yanıtlar yalnızca o belgeden gelsin. Dosya tarayıcınızda okunur, bir sunucuya yüklenmez.'
+    'Add a PDF or Word file and the answers will come only from it. The file is read in your browser and isn’t uploaded.',
+    'Bir PDF ya da Word dosyası ekleyin; yanıtlar yalnızca o belgeden gelsin. Dosya tarayıcınızda okunur, bir sunucuya yüklenmez.'
   ],
-  'own.add': ['Add a PDF', 'PDF ekleyin'],
+  'own.add': ['Add a document', 'Belge ekleyin'],
   'own.dialog': ['Add your own document', 'Kendi belgenizi ekleyin'],
   'own.submit': ['Add and ask', 'Ekle ve sor'],
   'own.ready': ['“{title}” is ready. Ask your question; answers come only from this document.', '“{title}” hazır. Sorunuzu yazın; yanıtlar yalnızca bu belgeden gelir.'],
@@ -696,12 +703,12 @@ export const STR = {
   'd.askOnly': ['Ask only this document', 'Yalnızca bu belgeye sor'],
   'g.role': ['You’re in as {name}, {job}. Each role sees different documents, and you can switch whenever you like.', '{name} ({job}) olarak girdiniz. Her rol farklı belgeleri görür; istediğiniz zaman değiştirebilirsiniz.'],
   'g.role.go': ['Choose another role', 'Başka bir rol seçin'],
-  'g.t6': ['Add a PDF of your own and ask about it.', 'Kendi PDF dosyanızı ekleyip ona soru sorun.'],
+  'g.t6': ['Add a PDF or Word file of your own and ask about it.', 'Kendi PDF ya da Word dosyanızı ekleyip ona soru sorun.'],
   'g.t6.look': [
     'the answer comes only from your document, with its passage marked. The file stays in your browser.',
     'yanıt yalnızca sizin belgenizden gelir, ilgili bölüm işaretlenir. Dosya tarayıcınızda kalır.'
   ],
-  'g.t6.go': ['Add a PDF', 'PDF ekle'],
+  'g.t6.go': ['Add a document', 'Belge ekle'],
   'g.more': [
     'How answers are written and the tools behind the app are on the About this project screen.',
     'Yanıtların nasıl yazıldığı ve uygulamada kullanılan araçlar “Bu proje hakkında” ekranında.'

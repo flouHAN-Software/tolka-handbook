@@ -104,12 +104,15 @@ export function addUpload(file: File, meta: UploadMeta): Doc {
       persist();
       emit();
       finished.forEach((f) => f(done));
+      // Anlam araması için bölümlerin vektörleri arka planda hesaplanır (başarısız olursa belge kelimeyle aranır)
+      if (done.status === 'ready') void import('../lib/vectors').then((m) => m.indexUpload(done));
     });
   return doc;
 }
 
 export function removeUpload(id: string) {
   list = list.filter((d) => d.id !== id);
+  void import('../lib/vectors').then((m) => m.dropUploadVectors(id));
   progress.delete(id);
   persist();
   emit();

@@ -331,6 +331,14 @@ export function Ask() {
           </>
         ) : (
           <div className="src-empty">
+            <div className="src-demo" aria-hidden="true">
+              <span className="sd-line" />
+              <span className="sd-line" />
+              <span className="sd-line sd-short" />
+              <span className="sd-row"><span className="sd-n">1</span><span className="sd-line sd-mark" /></span>
+              <span className="sd-line" />
+              <span className="sd-line sd-short" />
+            </div>
             <h2>{t('src.empty.title')}</h2>
             <p>{t('src.empty.text')}</p>
           </div>

@@ -3,5 +3,7 @@ dist/
 output/
 .wrangler/
 .corpus/
+.vectors/
+.bench/
 .dev.vars
 *.tsbuildinfo

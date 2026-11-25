@@ -5,6 +5,7 @@ import { ROLE_GRADE, answerLevel, passageOf, type AnswerData, type Cite } from '
 import { markHandoff } from '../../data/conversations';
 import { docById, review } from '../../data/library';
 import { turkishDoc } from '../../lib/search';
+import { streamView, useStream } from '../../lib/stream';
 import { date } from '../../lib/format';
 import { getLang, t } from '../../lib/i18n';
 import { currentRole } from '../../lib/role';
@@ -30,6 +31,7 @@ const Lens = () => (
 export function AnswerView({ a, convId, pick, onPick, onAnnounce }: {
   a: AnswerData; convId: string; pick: Pick | null; onPick: (p: Pick) => void; onAnnounce: (s: string) => void;
 }) {
+  const streaming = useStream(a.id);
   const level = answerLevel(a);
   const sources = [...new Set(a.cites.map((c) => c.docId))];
   const wording = a.wording ? docById(a.wording.docId) : undefined;
@@ -53,15 +55,22 @@ export function AnswerView({ a, convId, pick, onPick, onAnnounce }: {
     }
   };
 
-  // Model yazarken: ne yapıldığı yazar; sahte yazma gösterisi yok
+  // Model yazarken: ne yapıldığı yazar ve modelin gerçekten yazdığı metin geldikçe görünür (sahte yazma gösterisi yok).
+  // Kaynak numaraları ve alıntılar yanıt bitip denetlenince eklenir. Yarım metin ekran okuyucuya okunmaz; bitince duyurulur.
   if (a.pending) {
+    const view = streamView(streaming);
     return (
       <article className="qa" data-answer={a.id} aria-busy="true">
         <Question a={a} />
         <div className="pending" role="status">
           <span className="pending-bar" aria-hidden="true"><i /></span>
-          <p>{t('ai.pending', { n: a.cites.length })}</p>
+          <p>{a.cites.length ? t('ai.pending', { n: a.cites.length }) : t('ai.searching')}</p>
         </div>
+        {view && (
+          <div className="ai-text streaming" aria-hidden="true">
+            <p>{view}<span className="caret" /></p>
+          </div>
+        )}
       </article>
     );
   }

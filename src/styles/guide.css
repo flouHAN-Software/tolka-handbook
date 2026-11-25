@@ -208,3 +208,27 @@ dialog.guide::backdrop {
   margin-top: 8px;
   color: var(--text-2);
 }
+
+/* Geniş ekran: sağda yan panel; arkadaki Sor ekranı kullanılabilir kalır */
+@media (min-width: 1280px) {
+  dialog.guide.side {
+    position: fixed;
+    inset: 0 0 0 auto;
+    z-index: 50;
+    margin: 0;
+    width: min(560px, 40vw);
+    height: 100dvh;
+    max-height: none;
+    border-radius: 0;
+    border-left: 1px solid var(--line-2);
+  }
+  dialog.guide.side .g-scroll {
+    height: 100%;
+    max-height: none;
+    padding: 24px 28px 28px;
+  }
+  dialog.guide.side .g-screens > div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
