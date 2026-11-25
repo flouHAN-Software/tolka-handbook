@@ -130,3 +130,24 @@ button {
     scroll-behavior: auto !important;
   }
 }
+
+/* Hareket dili: pencereler aynı eğriyle açılır */
+dialog[open] {
+  animation: dlg-in var(--t-med) var(--ease-out) both;
+}
+dialog[open]::backdrop {
+  animation: dlg-fade var(--t-med) ease-out both;
+}
+dialog.guide.side[open] {
+  animation-name: side-in;
+  animation-duration: var(--t-slow);
+}
+@keyframes dlg-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+}
+@keyframes side-in {
+  from { opacity: 0; transform: translateX(28px); }
+}
+@keyframes dlg-fade {
+  from { opacity: 0; }
+}

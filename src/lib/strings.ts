@@ -509,6 +509,18 @@ export const STR = {
     'Gemma 4 runs on Cloudflare Workers AI. Only the few passages that match your question are sent to it.',
     'Gemma 4, Cloudflare Workers AI üzerinde çalışır. Ona yalnızca sorunuza uyan birkaç bölüm gönderilir.'
   ],
+  'tr.scan': ['Searched {passages} passages in {docs} documents', '{docs} belgede {passages} bölüm tarandı'],
+  'tr.finding': ['Matching by wording and by meaning…', 'Kelimeyle ve anlamla eşleştiriliyor…'],
+  'tr.found': ['{words} candidates by wording, {meaning} by meaning', 'Kelimeyle {words}, anlamla {meaning} aday bulundu'],
+  'tr.found.nomean': ['{words} candidates by wording; meaning search unavailable', 'Kelimeyle {words} aday bulundu; anlam araması kullanılamadı'],
+  'tr.chosen': ['Both rankings merged; {n} passages chosen for the model', 'İki sıralama birleştirildi; modele {n} bölüm seçildi'],
+  'tr.write': ['Gemma 4 is writing from them', 'Gemma 4 bunlardan yazıyor'],
+  'tr.how': ['How this answer was found', 'Bu yanıt nasıl bulundu'],
+  'tr.quotes': ['{ok} of {all} quotes matched the documents word for word', '{all} alıntının {ok} tanesi belgelerle birebir eşleşti'],
+  'peek.open': ['Select the number to open the document here.', 'Belgeyi burada açmak için numaraya tıklayın.'],
+  'src.desk': ['Or pick a document from the desk to ask only that one.', 'Ya da yalnızca birine sormak için masadaki belgelerden birini seçin.'],
+  'src.desk.label': ['Documents you can open', 'Açabildiğiniz belgeler'],
+  'src.desk.ask': ['Ask only this document:', 'Yalnızca bu belgeye sor:'],
   'ai.searching': ['Finding the passages that answer the question, by wording and by meaning…', 'Soruyu yanıtlayan bölümler hem kelimeyle hem anlamla aranıyor…'],
   'ai.pending': [
     'Gemma 4 is writing an answer from {n} passages on Cloudflare Workers AI. This usually takes a few seconds.',

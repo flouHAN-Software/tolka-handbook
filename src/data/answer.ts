@@ -22,6 +22,16 @@ export interface AiPart {
   sent: number;
 }
 
+/** Canlı arama izi (Hebbia'dan): bu soruda gerçekten ne yapıldı; sayıların hepsi bu soruya ait */
+export interface Trace {
+  docs: number;
+  passages: number;
+  words?: number;
+  /** null: anlam araması kullanılamadı */
+  meaning?: number | null;
+  chosen?: number;
+}
+
 export interface AnswerData {
   id: string;
   q: string;
@@ -40,6 +50,7 @@ export interface AnswerData {
   /** Okunmadığı için aranmayan belgeler */
   notSearched: { docId: string; why: 'processing' | 'failed' }[];
   handoff?: { at: string };
+  trace?: Trace;
 }
 
 const RANK: Classification[] = ['public', 'internal', 'confidential', 'strict'];

@@ -34,6 +34,12 @@
   --font-ui: 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif;
   --font-doc: 'Source Serif 4 Variable', Georgia, serif;
 
+  /* Hareket dili (Linear'dan): her geçiş aynı eğri ailesiyle, kısa ve nedenli */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --t-fast: 140ms;
+  --t-med: 240ms;
+  --t-slow: 420ms;
+
   --nav: 232px;
   --rail: 64px;
   --bar: 56px;
@@ -41,17 +47,18 @@
   color-scheme: light;
 }
 
+/* Gece masası: koyu masada sıcak gri kâğıtlar; sarı kalem aynı anlamı taşır */
 [data-theme='dark'] {
-  --canvas: #0E0F11;
-  --surface: #16171A;
-  --page: #1B1C1F;
-  --sunk: #1E2023;
+  --canvas: #0F0E0D;
+  --surface: #171615;
+  --page: #201E1B;
+  --sunk: #1E1C1A;
   --text: #ECEBE6;
   --text-2: #BDBCB5;
   --text-3: #9C9B95;
   --text-4: #6E6D68;
-  --line: #2A2C30;
-  --line-2: #3D4045;
+  --line: #2D2B28;
+  --line-2: #423F3A;
   --mark: #F5D63F;
   --mark-ink: #15171A;
   --mark-soft: #3B3720;

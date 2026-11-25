@@ -6,10 +6,10 @@ import { askModel, toModel } from '../lib/ai';
 import { Index, type Passage } from '../lib/search';
 import { clearStream, setStream } from '../lib/stream';
 import { embed, seedVectors, sim, uploadVectors } from '../lib/vectors';
-import { ROLE_ASKER, ROLE_BOOST, answer, gradeRow, passageOf, searchable, withoutDate, type AnswerData, type Cite } from './answer';
+import { ROLE_ASKER, ROLE_BOOST, answer, gradeRow, passageOf, searchable, withoutDate, type AnswerData, type Cite, type Trace } from './answer';
 import { addAnswer, updateAnswer } from './conversations';
 import { docById } from './library';
-import type { Doc, RoleId } from './types';
+import type { RoleId } from './types';
 
 export type Mode = 'ai' | 'search';
 
@@ -22,8 +22,7 @@ const SEND = 5;
 const clauseKey = (p: Passage) => `${p.doc.id}#${p.loc.clause}`;
 
 /** Kelime ve anlam sıralamalarını birleştirir. Vektör ucuna ulaşılamazsa yalnızca kelime sıralaması kalır. */
-export async function retrieve(q: string, docs: Doc[], role: RoleId): Promise<{ p: Passage; matched: string[]; via: ('word' | 'meaning')[] }[]> {
-  const index = new Index(docs);
+export async function retrieve(q: string, index: Index, role: RoleId): Promise<{ picked: { p: Passage; matched: string[]; via: ('word' | 'meaning')[] }[]; words: number; meaning: number | null }> {
   const words = index.search(withoutDate(q), 20, ROLE_BOOST[role], 0.3).hits;
   const fused = new Map<string, { p: Passage; matched: string[]; s: number; via: ('word' | 'meaning')[] }>();
   const add = (p: Passage, rank: number, matched: string[], via: 'word' | 'meaning') => {
@@ -39,6 +38,7 @@ export async function retrieve(q: string, docs: Doc[], role: RoleId): Promise<{ 
   words.forEach((h, i) => add(h.p, i, h.matched, 'word'));
 
   const [qv] = (await embed([q])) ?? [];
+  let meaning: number | null = null;
   if (qv) {
     const seed = await seedVectors();
     const scored: { p: Passage; x: number }[] = [];
@@ -58,8 +58,9 @@ export async function retrieve(q: string, docs: Doc[], role: RoleId): Promise<{ 
       add(p, rank++, [], 'meaning');
       if (rank >= 20) break;
     }
+    meaning = rank;
   }
-  return [...fused.values()].sort((a, b) => b.s - a.s).slice(0, SEND);
+  return { picked: [...fused.values()].sort((a, b) => b.s - a.s).slice(0, SEND), words: words.length, meaning };
 }
 
 export function ask(convId: string | undefined, q: string, role: RoleId, lossDateField: string | undefined, lang: 'en' | 'tr', mode: Mode, only?: string) {
@@ -69,25 +70,29 @@ export function ask(convId: string | undefined, q: string, role: RoleId, lossDat
     return { convId: id, answer: base, done: Promise.resolve(base) };
   }
   const { docs } = searchable(role, base.lossDate, only);
-  const pending: AnswerData = { ...base, mode: 'ai', pending: true, kind: 'found', cites: [] };
+  const index = new Index(docs);
+  const trace: Trace = { docs: docs.length, passages: index.passages.length };
+  const pending: AnswerData = { ...base, mode: 'ai', pending: true, kind: 'found', cites: [], trace };
   const id = addAnswer(convId, pending);
 
   const done = (async (): Promise<AnswerData> => {
-    const picked = await retrieve(q, docs, role);
+    const found = await retrieve(q, index, role);
+    const picked = found.picked;
+    const traced: Trace = { ...trace, words: found.words, meaning: found.meaning, chosen: picked.length };
     // Hiçbir bölüm eşleşmiyorsa modele sorulmaz (kota harcanmaz)
     if (!picked.length) {
-      const next = { ...base, id: pending.id };
+      const next = { ...base, id: pending.id, trace: traced };
       updateAnswer(id, pending.id, next);
       return next;
     }
     const sent: Cite[] = picked.map(({ p, matched }) => gradeRow({ key: p.key, docId: p.doc.id, ref: p.ref, loc: p.loc, matched }, role));
-    updateAnswer(id, pending.id, { ...pending, cites: sent });
+    updateAnswer(id, pending.id, { ...pending, cites: sent, trace: traced });
 
     const r = await askModel(q, lang, ROLE_ASKER[role], sent.map((c) => toModel(passageOf(c)!)), role, undefined, (s) => setStream(pending.id, s));
     clearStream(pending.id);
     let next: AnswerData;
     if (!r.ok) {
-      next = { ...base, id: pending.id, fallback: r.reason };
+      next = { ...base, id: pending.id, fallback: r.reason, trace: traced };
     } else {
       // Modelin kullandığı bölümler yanıttaki sıraya göre yeniden numaralanır (1, 2, 3…)
       const order = [...new Set([...r.cited, ...r.quotes.map((x) => x.n)])].filter((n) => n >= 1 && n <= sent.length);
@@ -104,6 +109,7 @@ export function ask(convId: string | undefined, q: string, role: RoleId, lossDat
         mode: 'ai',
         kind: r.verdict === 'none' ? 'none' : 'found',
         cites,
+        trace: traced,
         wording: wordingDoc ? { docId: wordingDoc.id, reason: base.lossDate ? 'date' : 'today' } : undefined,
         ai: {
           model: r.model,

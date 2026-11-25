@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type KeyboardEvent } from 'react';
 import { DocView } from '../../components/DocView';
 import { ClassLabel, Status } from '../../components/Labels';
 import { passageOf, type AnswerData } from '../../data/answer';
 import { ask, type Mode } from '../../data/ask';
 import { conversationById, useConversations } from '../../data/conversations';
-import { canOpen, docById, review } from '../../data/library';
+import { allDocs, canOpen, docById, review } from '../../data/library';
 import { liveStatus, useProcessing } from '../../data/processing';
 import { onUploadFinished, useUploads } from '../../data/uploads';
 import { currentAccount } from '../../lib/account';
@@ -19,6 +19,7 @@ import { go, href, useRoute } from '../../lib/router';
 import { useMedia } from '../../lib/useMedia';
 import { AnswerView } from './Answer';
 import { TRY_KEY } from '../../components/Guide';
+import type { Key } from '../../lib/strings';
 
 // Başlangıç önerileri: demonun gerçek senaryoları, her dil kendi sözleriyle
 const ROLE_SUGGEST: Record<string, { en: string; tr: string }> = {
@@ -71,6 +72,7 @@ export function Ask() {
 
   // "Yalnızca bu belgeye sor": kendi eklenen PDF ya da kütüphaneden seçilen belge
   const scopeId = useScope();
+  const desk = allDocs().filter((d) => !d.uploaded && !d.supersededBy && d.status === 'ready' && canOpen(d, role)).slice(0, 6);
   const scoped = scopeId ? docById(scopeId) : undefined;
   const scopedDoc = scoped && canOpen(scoped, role) ? scoped : undefined;
   useEffect(() => { if (scopeId && !scopedDoc) setScope(null); }, [scopeId, scopedDoc]);
@@ -156,9 +158,23 @@ export function Ask() {
       const box = thread.current;
       const el = box?.querySelector<HTMLElement>(`[data-answer="${a.id}"]`);
       if (!box || !el) return;
-      const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (phone) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: smooth ? 'smooth' : 'auto' });
-      else box.scrollTo({ top: box.scrollTop + el.getBoundingClientRect().top - box.getBoundingClientRect().top - 16, behavior: smooth ? 'smooth' : 'auto' });
+      const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+      const toQuestion = () => {
+        if (phone) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior });
+        else box.scrollTo({ top: box.scrollTop + el.getBoundingClientRect().top - box.getBoundingClientRect().top - 16, behavior });
+      };
+      toQuestion();
+      if (!a.pending) return;
+      // Yanıt yazılırken alan büyür: soru üstte kalsın diye hedef korunur; kişi kendisi kaydırırsa bırakılır
+      let own = false;
+      const mine = () => { own = true; };
+      const ro = new ResizeObserver(() => { if (!own) toQuestion(); });
+      ro.observe(el);
+      for (const ev of ['wheel', 'touchmove', 'keydown'] as const) window.addEventListener(ev, mine, { passive: true });
+      done.finally(() => {
+        ro.disconnect();
+        for (const ev of ['wheel', 'touchmove', 'keydown'] as const) window.removeEventListener(ev, mine);
+      });
     });
   };
 
@@ -331,16 +347,26 @@ export function Ask() {
           </>
         ) : (
           <div className="src-empty">
-            <div className="src-demo" aria-hidden="true">
-              <span className="sd-line" />
-              <span className="sd-line" />
-              <span className="sd-line sd-short" />
-              <span className="sd-row"><span className="sd-n">1</span><span className="sd-line sd-mark" /></span>
-              <span className="sd-line" />
-              <span className="sd-line sd-short" />
-            </div>
             <h2>{t('src.empty.title')}</h2>
-            <p>{t('src.empty.text')}</p>
+            <p>{t('src.empty.text')} {t('src.desk')}</p>
+            {/* Masadaki belgeler: rolün açabildiği güncel belgeler masaya bırakılmış kâğıtlar gibi durur */}
+            <ul className="desk" aria-label={t('src.desk.label')}>
+              {desk.map((d, i) => (
+                <li key={d.id} style={{ '--i': i } as CSSProperties}>
+                  <button type="button" className="desk-doc" aria-pressed={scopeId === d.id}
+                    onClick={() => {
+                      setScope(scopeId === d.id ? null : d.id);
+                      requestAnimationFrame(() => box.current?.focus());
+                    }}>
+                    <span className="sr-only">{t('src.desk.ask')}</span>
+                    <span className="desk-head"><span className="desk-org">Tolka</span><span>{t(`kind.${d.kind}` as Key)}</span></span>
+                    <span className="desk-title">{d.title}</span>
+                    <span className="desk-lines" aria-hidden="true"><i /><i /><i /></span>
+                    <span className="desk-foot"><span>{t('vw.version')} {d.version}</span><ClassLabel c={d.classification} /></span>
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </aside>

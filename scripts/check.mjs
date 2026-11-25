@@ -900,6 +900,70 @@ try {
     (errors.length ? fail : ok)(`akış: sayfa hatası yok${errors.length ? ' · ' + errors[0] : ''}`);
     await ctx.close();
   }
+
+  // 15) Tasarım turu (taklit sunucuyla): yazarken canlı arama izi ve kaynak kâğıtları, sonra "Bu yanıt nasıl bulundu",
+  //     numaranın önizleme fişi (fare ve klavye, Esc kapatır), boş kaynak alanında masadaki belgeler
+  {
+    const ctx = await browser.newContext(SIZES[0].opts);
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    const done = { ok: true, model: 'Gemma 4', modelKey: 'gemma', verdict: 'answered', answer: 'The excess is €400 [1].', quotes: [], dropped: 0, cited: [1], neurons: 1 };
+    const sse = (events) => events.map((e) => `data: ${JSON.stringify(e)}`).join('\n\n') + '\n\n';
+    await page.route('**/api/handbook/embed', (r) => r.fulfill({ status: 503, contentType: 'application/json', body: '{"ok":false,"reason":"busy"}' }));
+    await page.route('**/api/handbook/answer', async (r) => {
+      await new Promise((res) => setTimeout(res, 1600));
+      await r.fulfill({ status: 200, headers: { 'Content-Type': 'text/event-stream; charset=utf-8' }, body: sse([{ t: 'd', s: 'The excess is €400 [1].' }, { t: 'done', r: done }]) });
+    });
+    await open(page, 'en', 'light', 'ask');
+
+    // Masadaki belgeler
+    const desk = await page.locator('.desk .desk-doc').count();
+    (desk >= 1 && desk <= 6 ? ok : fail)(`masa: boş kaynak alanında ${desk} belge duruyor`);
+    await page.locator('.desk .desk-doc').first().click();
+    await page.waitForTimeout(200);
+    const scoped = (await page.locator('.scope').count()) === 1 && (await page.locator('.desk .desk-doc').first().getAttribute('aria-pressed')) === 'true';
+    const focused = await page.evaluate(() => document.activeElement?.id === 'ask-q');
+    (scoped && focused ? ok : fail)('masa: belgeye tıklayınca yalnızca ona soruluyor, soru kutusuna geçiliyor');
+    await page.locator('.desk .desk-doc').first().click();
+    await page.waitForTimeout(200);
+    ((await page.locator('.scope').count()) === 0 ? ok : fail)('masa: ikinci tıklama kapsamı kaldırıyor');
+
+    // Canlı iz ve kaynak kâğıtları
+    await page.fill('#ask-q', 'What is the escape of water excess?');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(700);
+    const steps = await page.locator('.qa[aria-busy="true"] .trace li').count();
+    const papers = await page.locator('.qa[aria-busy="true"] .papers li').count();
+    const traceText = (await page.textContent('.qa[aria-busy="true"] .trace').catch(() => '')) ?? '';
+    (steps >= 3 && papers >= 1 ? ok : fail)(`iz: yazarken ${steps} adım ve ${papers} kaynak kâğıdı görünüyor`);
+    (/\d+ passages in \d+ documents/.test(traceText) && traceText.includes('meaning search unavailable') ? ok : fail)('iz: sayılar bu soruya ait; anlam araması kapalıysa bunu söylüyor');
+    await page.waitForFunction(() => !document.querySelector('[aria-busy="true"]'), null, { timeout: 10000 }).catch(() => {});
+    await page.waitForTimeout(500);
+    await page.click('.qa:last-child .how summary');
+    const how = (await page.textContent('.qa:last-child .how')) ?? '';
+    (how.includes('passages chosen for the model') ? ok : fail)('iz: yanıttan sonra "Bu yanıt nasıl bulundu" altında duruyor');
+
+    // Önizleme fişi
+    const cite = page.locator('.qa:last-child .ai-text .cite').first();
+    await cite.hover();
+    await page.waitForTimeout(250);
+    const peekText = (await page.textContent('.peek[role="tooltip"]').catch(() => '')) ?? '';
+    const described = (await cite.getAttribute('aria-describedby')) === (await page.locator('.peek').getAttribute('id').catch(() => 'x'));
+    (peekText.length > 40 && described ? ok : fail)('fiş: numaranın üstüne gelince ilgili bölüm fişte görünüyor (aria-describedby)');
+    await axeCheck(page, 'önizleme fişi');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(100);
+    ((await page.locator('.peek').count()) === 0 ? ok : fail)('fiş: Esc kapatıyor');
+    await page.mouse.move(5, 5);
+    await cite.focus();
+    await page.waitForTimeout(150);
+    ((await page.locator('.peek').count()) === 1 ? ok : fail)('fiş: klavyeyle odaklanınca da açılıyor');
+    if (SHOTS) await page.screenshot({ path: join(OUT, '1440', 'fis-en-light.png') });
+    await page.keyboard.press('Escape');
+    (errors.length ? fail : ok)(`tasarım: sayfa hatası yok${errors.length ? ' · ' + errors[0] : ''}`);
+    await ctx.close();
+  }
 } finally {
   await browser.close();
 }

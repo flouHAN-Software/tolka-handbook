@@ -24,8 +24,8 @@ const L = {
     own: 'How much is the broadband contribution?',
     c: [
       'An internal document assistant for a home insurer. The first visit explains each screen and what to try.',
-      'The answer streams in as it is written, only from the passages found, and it notices that two documents disagree.',
-      'Each number opens the source document, with the passage marked.',
+      'It shows what it searched and which passages it chose, then writes only from them, and notices that two documents disagree.',
+      'Pointing at a number shows the passage on a slip. Selecting it opens the document with the passage marked.',
       'With a date of loss before March 2026, the 2024.2 wording applies, and the answer says why.',
       'Each role sees different documents. An investigator gets an answer from the fraud indicators.',
       'A claims handler asking the same question gets nothing from that document, not even its name.',
@@ -42,8 +42,8 @@ const L = {
     own: 'Yıllık izin kaç gün? Kullanmadığım izinler ne olur?',
     c: [
       'Bir konut sigortacısının iç doküman asistanı. İlk girişte her ekranın ne işe yaradığı ve önce ne deneneceği anlatılır.',
-      'Yanıt yazıldıkça akar; yalnızca bulunan bölümlerden yazılır ve iki belgenin çeliştiğini de fark eder.',
-      'Her numara kaynak belgeyi açar; ilgili bölüm işaretlidir.',
+      'Önce neyi taradığını ve hangi bölümleri seçtiğini gösterir; sonra yalnızca onlardan yazar ve iki belgenin çeliştiğini fark eder.',
+      'Numaranın üstüne gelince bölüm küçük bir fişte görünür; tıklayınca belge, bölüm işaretli açılır.',
       'Hasar Mart 2026’dan önceyse 2024.2 şartları geçerlidir; yanıt bunun nedenini de söyler.',
       'Her rol farklı belgeleri görür. Araştırmacı yanıtını suistimal göstergelerinden alır.',
       'Aynı soruyu soran hasar uzmanı o belgeden hiçbir şey almaz; belgenin adı bile geçmez.',
@@ -114,14 +114,16 @@ await page.locator('#g-try').scrollIntoViewIfNeeded();
 await pause(900);
 await click('.g-tries li >> nth=0 >> .btn');
 
-// 2. Yanıt: yazıldıkça akar
+// 2. Yanıt: önce arama izi ve kaynak kâğıtları, sonra yazıldıkça akar
 await cap(2, L.c[1]);
 await answered();
 await pause(1800);
-// 3. Kaynak
-await click('.qa:last-child .ai-text .cite >> nth=1');
+// 3. Önizleme fişi, sonra kaynak
 await cap(3, L.c[2]);
-await pause(2000);
+await moveTo(page.locator('.qa:last-child .ai-text .cite').nth(1));
+await pause(2200);
+await click('.qa:last-child .ai-text .cite >> nth=1');
+await pause(1800);
 await click('.qa:last-child .ai-text .cite >> nth=0');
 await pause(800);
 

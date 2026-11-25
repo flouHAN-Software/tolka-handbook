@@ -123,6 +123,37 @@ const shot = async (p, name, opts = {}) => { await p.screenshot({ path: join(OUT
   await shot(p, '11-kendi-belge.png');
   await p.context().close();
 }
+// 12. Yazarken: canlı arama izi, kaynak kâğıtları, akan yanıt; sağda masadaki belgeler
+{
+  const p = await page();
+  // Yanıt önbellekten değil yazdırılarak gelsin ve iz görünsün diye istek biraz bekletilir (yalnızca yerelde geçerli bayrak)
+  await p.route('**/api/handbook/answer', async (r) => {
+    await new Promise((res) => setTimeout(res, 2500));
+    await r.continue({ postData: JSON.stringify({ ...JSON.parse(r.request().postData() || '{}'), fresh: true }) });
+  });
+  await go(p, 'ask');
+  await p.fill('#ask-q', 'What should I check before paying an escape of water claim?');
+  await p.keyboard.press('Enter');
+  await p.waitForFunction(() => document.querySelectorAll('.papers li').length >= 5, null, { timeout: 30000 });
+  await p.waitForFunction(() => (document.querySelector('.ai-text.streaming')?.textContent.length ?? 0) > 140, null, { timeout: 30000 }).catch(() => {});
+  await shot(p, '12-iz.png');
+  await p.waitForFunction(() => !document.querySelector('[aria-busy="true"]'), null, { timeout: 40000 }).catch(() => {});
+  await p.context().close();
+}
+// 13. Önizleme fişi: numaranın üstüne gelince bölüm fişte; "Bu yanıt nasıl bulundu" açık, kaynak kalemle işaretli
+{
+  const p = await page();
+  await go(p, 'ask');
+  await ask(p, 'What is the escape of water excess?');
+  await p.click('.qa:last-child .ai-text .cite >> nth=1');
+  await p.waitForTimeout(1200);
+  await p.click('.qa:last-child .how summary');
+  await p.waitForTimeout(300);
+  await p.locator('.qa:last-child .ai-text .cite').nth(1).hover();
+  await p.waitForTimeout(500);
+  await shot(p, '13-fis.png');
+  await p.context().close();
+}
 // 9. Rehber
 {
   const p = await page({ guide: true, as: '' });

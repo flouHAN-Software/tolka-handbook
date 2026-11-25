@@ -1,7 +1,8 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { ClassLabel, Status } from '../../components/Labels';
 import { DocText } from '../../components/Text';
-import { ROLE_GRADE, answerLevel, passageOf, type AnswerData, type Cite } from '../../data/answer';
+import { ROLE_GRADE, answerLevel, passageOf, type AnswerData, type Cite, type Trace } from '../../data/answer';
 import { markHandoff } from '../../data/conversations';
 import { docById, review } from '../../data/library';
 import { turkishDoc } from '../../lib/search';
@@ -40,6 +41,64 @@ export function AnswerView({ a, convId, pick, onPick, onAnnounce }: {
   const on = (i: number) => pick?.answerId === a.id && pick.i === i;
   const show = (i: number) => onPick({ answerId: a.id, i });
 
+  // Önizleme fişi (Wikipedia sayfa önizlemelerinden): fareyle numaranın üstüne gelince ya da klavyeyle odaklanınca
+  // ilgili bölüm küçük bir kâğıt fişte görünür; tıklamak yine belgeyi açar. Dokunmatik ekranda açılmaz.
+  // Fişin üstüne geçince açık kalır, Esc ve kaydırma kapatır (WCAG 1.4.13).
+  const [peek, setPeek] = useState<{ i: number; left: number; top: number; up: boolean } | null>(null);
+  const shut = useRef(0);
+  const peekId = `peek-${a.id}`;
+  const keep = () => window.clearTimeout(shut.current);
+  const hover: Hover = {
+    enter: (i, el, focus) => {
+      if (focus && !el.matches(':focus-visible')) return;
+      keep();
+      const r = el.getBoundingClientRect();
+      const w = Math.min(380, innerWidth - 24);
+      const up = r.bottom + 250 > innerHeight;
+      setPeek({ i, left: Math.max(12, Math.min(r.left - 24, innerWidth - w - 12)), top: up ? r.top - 10 : r.bottom + 10, up });
+    },
+    leave: () => {
+      keep();
+      shut.current = window.setTimeout(() => setPeek(null), 160);
+    },
+    close: () => {
+      keep();
+      setPeek(null);
+    },
+    desc: (i) => (peek?.i === i ? peekId : undefined)
+  };
+  useEffect(() => {
+    if (!peek) return;
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') setPeek(null); };
+    const away = () => setPeek(null);
+    window.addEventListener('keydown', key);
+    window.addEventListener('scroll', away, true);
+    window.addEventListener('resize', away);
+    return () => {
+      window.removeEventListener('keydown', key);
+      window.removeEventListener('scroll', away, true);
+      window.removeEventListener('resize', away);
+    };
+  }, [peek]);
+  useEffect(() => () => window.clearTimeout(shut.current), []);
+  const peekCard = (() => {
+    if (!peek) return null;
+    const p = passageOf(a.cites[peek.i]);
+    if (!p) return null;
+    return createPortal(
+      <div className={`peek${peek.up ? ' up' : ''}`} role="tooltip" id={peekId} style={{ left: peek.left, top: peek.top }}
+        onPointerEnter={keep} onPointerLeave={hover.leave}>
+        <span className="peek-doc">
+          <span className="cite sm" aria-hidden="true">{peek.i + 1}</span>
+          <span>{p.doc.title} {p.doc.version} · {t('ans.clause', { n: p.ref })}</span>
+        </span>
+        <p className="peek-q" lang={turkishDoc(p.doc) ? 'tr' : 'en'}><mark>{clip(p.text, 260)}</mark></p>
+        <span className="peek-hint">{t('peek.open')}</span>
+      </div>,
+      document.body
+    );
+  })();
+
   const copy = async () => {
     const lines = [a.q, ''];
     if (a.ai) lines.push(a.ai.text, '');
@@ -59,13 +118,26 @@ export function AnswerView({ a, convId, pick, onPick, onAnnounce }: {
   // Kaynak numaraları ve alıntılar yanıt bitip denetlenince eklenir. Yarım metin ekran okuyucuya okunmaz; bitince duyurulur.
   if (a.pending) {
     const view = streamView(streaming);
+    const papers = a.cites.map(passageOf).filter((p): p is NonNullable<typeof p> => !!p);
     return (
       <article className="qa" data-answer={a.id} aria-busy="true">
         <Question a={a} />
         <div className="pending" role="status">
-          <span className="pending-bar" aria-hidden="true"><i /></span>
-          <p>{a.cites.length ? t('ai.pending', { n: a.cites.length }) : t('ai.searching')}</p>
+          <p className="sr-only">{a.cites.length ? t('ai.pending', { n: a.cites.length }) : t('ai.searching')}</p>
+          {a.trace ? <TraceList tr={a.trace} live /> : <p aria-hidden="true">{t('ai.searching')}</p>}
         </div>
+        {/* Kaynak kâğıtları (Perplexity'den): yanıt yazılmadan önce nereden geleceği görünür */}
+        {papers.length > 0 && (
+          <ul className="papers" aria-hidden="true">
+            {papers.map((p, i) => (
+              <li key={p.key} style={{ '--i': i } as CSSProperties}>
+                <span className="paper-doc">{p.doc.title}</span>
+                <span className="paper-ref">{t('ans.clause', { n: p.ref })}</span>
+                <span className="paper-text" lang={turkishDoc(p.doc) ? 'tr' : 'en'}>{clip(p.text, 110)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
         {view && (
           <div className="ai-text streaming" aria-hidden="true">
             <p>{view}<span className="caret" /></p>
@@ -91,7 +163,14 @@ export function AnswerView({ a, convId, pick, onPick, onAnnounce }: {
             {a.ai.dropped ? t('ai.quotes.dropped', { n: a.ai.dropped }) : a.ai.quotes.length ? t('ai.quotes.ok') : ''}
           </span>
         </div>
-      ) : (
+      ) : null}
+      {a.ai && a.trace?.chosen !== undefined ? (
+        <details className="how">
+          <summary>{t('tr.how')}</summary>
+          <TraceList tr={a.trace} quotes={{ ok: a.ai.quotes.length, all: a.ai.quotes.length + a.ai.dropped }} />
+        </details>
+      ) : null}
+      {a.ai ? null : (
         <div className="row">
           <Lens />
           <span>
@@ -128,6 +207,12 @@ export function AnswerView({ a, convId, pick, onPick, onAnnounce }: {
           <Handoff a={a} convId={convId} primary />
           {a.ai && <p className="small none-by">{t('ai.by', { model: a.ai.model, n: a.ai.sent })}</p>}
           {a.fallback && <p className="small none-by">{t(FALLBACK[a.fallback] ?? 'fb.busy')}</p>}
+          {a.trace?.chosen !== undefined && (
+            <details className="how none-how">
+              <summary>{t('tr.how')}</summary>
+              <TraceList tr={a.trace} />
+            </details>
+          )}
         </div>
       </article>
     );
@@ -143,7 +228,7 @@ export function AnswerView({ a, convId, pick, onPick, onAnnounce }: {
             {/* Asistanın sözü: düz yazı, her iddiada kaynak numarası */}
             <div className="ai-text">
               {a.ai.text.split(/\n{2,}/).map((para, pi) => (
-                <p key={pi}>{withCites(para, a.cites, on, show)}</p>
+                <p key={pi}>{withCites(para, a.cites, on, show, hover)}</p>
               ))}
             </div>
             {/* Belgenin sözü: birebir doğrulanmış alıntılar, serif */}
@@ -154,7 +239,7 @@ export function AnswerView({ a, convId, pick, onPick, onAnnounce }: {
                   const p = passageOf(a.cites[qt.i]);
                   return (
                     <figure key={k} className="aiq">
-                      <blockquote className="quote" lang="en">{qt.text}</blockquote>
+                      <blockquote className="quote" lang={p && turkishDoc(p.doc) ? 'tr' : 'en'}>{qt.text}</blockquote>
                       {p && (
                         <figcaption>
                           <button type="button" className="cite sm" aria-pressed={on(qt.i)} onClick={() => show(qt.i)} aria-label={`${qt.i + 1}: ${p.doc.title} ${p.doc.version}, ${t('ans.clause', { n: p.ref })}`}>{qt.i + 1}</button>
@@ -206,7 +291,7 @@ export function AnswerView({ a, convId, pick, onPick, onAnnounce }: {
                         <span>{t('ans.page', { n: p.section.page })} · {t('ans.clause', { n: p.ref })}</span>
                       </p>
                       {rv.state === 'overdue' && <Status kind="warn">{t('ans.overdue', { date: date(p.doc.reviewDue) })}</Status>}
-                      <blockquote className="quote" lang="en"><DocText text={p.quote} matched={c.matched} /></blockquote>
+                      <blockquote className="quote" lang={turkishDoc(p.doc) ? 'tr' : 'en'}><DocText text={p.quote} matched={c.matched} /></blockquote>
                       <button type="button" className="linkish show" onClick={() => show(i)} aria-pressed={on(i)}>
                         {on(i) ? t('ans.showing') : t('ans.show')}
                       </button>
@@ -223,13 +308,44 @@ export function AnswerView({ a, convId, pick, onPick, onAnnounce }: {
           <Handoff a={a} convId={convId} />
         </div>
       </div>
+      {peekCard}
     </article>
+  );
+}
+
+type Hover = {
+  enter: (i: number, el: HTMLElement, focus: boolean) => void;
+  leave: () => void;
+  close: () => void;
+  desc: (i: number) => string | undefined;
+};
+
+/** Metni kelime sınırında kısaltır */
+const clip = (s: string, n: number) => {
+  if (s.length <= n) return s;
+  const cut = s.lastIndexOf(' ', n);
+  return s.slice(0, cut > n * 0.6 ? cut : n).replace(/[\s,;:.]+$/, '') + '…';
+};
+
+/** Arama izi: her satır bu soruda gerçekten yapılan iştir; yazarken canlı, sonra "Bu yanıt nasıl bulundu" altında */
+function TraceList({ tr, live = false, quotes }: { tr: Trace; live?: boolean; quotes?: { ok: number; all: number } }) {
+  const matched = tr.chosen !== undefined;
+  return (
+    <ol className={`trace${live ? ' live' : ''}`} aria-hidden={live ? 'true' : undefined}>
+      <li className="done">{t('tr.scan', { docs: tr.docs, passages: tr.passages })}</li>
+      <li className={matched ? 'done' : 'now'}>
+        {!matched ? t('tr.finding') : tr.meaning === null ? t('tr.found.nomean', { words: tr.words ?? 0 }) : t('tr.found', { words: tr.words ?? 0, meaning: tr.meaning ?? 0 })}
+      </li>
+      {matched && <li className="done">{t('tr.chosen', { n: tr.chosen ?? 0 })}</li>}
+      {matched && live && <li className="now">{t('tr.write')}</li>}
+      {quotes && quotes.all > 0 && <li className="done">{t('tr.quotes', quotes)}</li>}
+    </ol>
   );
 }
 
 /** Yanıt metnindeki [1], [1, 2] işaretleri tıklanabilir kaynak numarasına dönüşür */
 // Kaynak numaraları önceki kelimeye ve ardından gelen noktalamaya yapışık kalır; nokta satır başına düşmez
-function withCites(text: string, cites: Cite[], on: (i: number) => boolean, show: (i: number) => void) {
+function withCites(text: string, cites: Cite[], on: (i: number) => boolean, show: (i: number) => void, hover?: Hover) {
   const parts = text.split(/((?:\s*\[\d+(?:\s*,\s*\d+)*\])+)/g);
   const out: ReactNode[] = [];
   let skip = 0;
@@ -254,7 +370,13 @@ function withCites(text: string, cites: Cite[], on: (i: number) => boolean, show
           {nums.map((i) => {
             const p = passageOf(cites[i]);
             return (
-              <button key={i} type="button" className="cite in" aria-pressed={on(i)} onClick={() => show(i)}
+              <button key={i} type="button" className="cite in" aria-pressed={on(i)}
+                onClick={() => { hover?.close(); show(i); }}
+                onPointerEnter={hover ? (e) => { if (e.pointerType === 'mouse') hover.enter(i, e.currentTarget, false); } : undefined}
+                onPointerLeave={hover?.leave}
+                onFocus={hover ? (e) => hover.enter(i, e.currentTarget, true) : undefined}
+                onBlur={hover?.close}
+                aria-describedby={hover?.desc(i)}
                 aria-label={p ? `${i + 1}: ${p.doc.title} ${p.doc.version}, ${t('ans.clause', { n: p.ref })}` : String(i + 1)}>
                 {i + 1}
               </button>
